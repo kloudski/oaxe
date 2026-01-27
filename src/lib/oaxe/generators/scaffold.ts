@@ -202,45 +202,161 @@ next-env.d.ts
 @tailwind components;
 @tailwind utilities;
 
+/* ===== LIGHT-MODE-FIRST DESIGN SYSTEM ===== */
+
 :root {
-  --background: #09090b;
-  --foreground: #fafafa;
+  /* Background hierarchy */
+  --bg-primary: #ffffff;
+  --bg-secondary: #fafafa;
+  --bg-tertiary: #f4f4f5;
+  --bg-hover: #f0f0f1;
+  --bg-active: #e8e8ea;
+
+  /* Text hierarchy */
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-muted: #71717a;
+  --text-placeholder: #a1a1aa;
+
+  /* Border colors */
+  --border-default: #e4e4e7;
+  --border-subtle: #f4f4f5;
+  --border-strong: #d4d4d8;
+
+  /* Shadow system */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(0, 0, 0, 0.03);
+
+  /* Accent */
+  --accent: ${primaryColor};
+  --accent-hover: #0284c7;
+  --accent-muted: rgba(14, 165, 233, 0.1);
+
+  /* Selection */
+  --selection-bg: rgba(14, 165, 233, 0.15);
+}
+
+.dark {
+  --bg-primary: #09090b;
+  --bg-secondary: #18181b;
+  --bg-tertiary: #27272a;
+  --bg-hover: #3f3f46;
+  --bg-active: #52525b;
+
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --text-placeholder: #52525b;
+
+  --border-default: #27272a;
+  --border-subtle: #1f1f23;
+  --border-strong: #3f3f46;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.25), 0 4px 6px rgba(0, 0, 0, 0.15);
+
+  --accent-muted: rgba(14, 165, 233, 0.15);
+  --selection-bg: rgba(14, 165, 233, 0.25);
+}
+
+/* ===== BASE STYLES ===== */
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Inter, system-ui, sans-serif;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  line-height: 1.5;
 }
 
-/* Scrollbar styling */
+/* ===== TYPOGRAPHY ===== */
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+h1 { font-size: 1.875rem; line-height: 2.25rem; }
+h2 { font-size: 1.5rem; line-height: 2rem; }
+h3 { font-size: 1.25rem; line-height: 1.75rem; }
+h4 { font-size: 1.125rem; line-height: 1.5rem; }
+
+p { color: var(--text-secondary); }
+
+.text-muted { color: var(--text-muted); }
+
+/* ===== SELECTION ===== */
+
+::selection {
+  background: var(--selection-bg);
+  color: var(--text-primary);
+}
+
+/* ===== SCROLLBAR ===== */
+
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #18181b;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3f3f46;
-  border-radius: 4px;
+  background: var(--border-strong);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #52525b;
+  background: var(--text-muted);
 }
 
-/* Focus styles */
+/* ===== FOCUS RINGS ===== */
+
 *:focus-visible {
-  outline: 2px solid #0ea5e9;
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent);
 }
 
-/* Form input base styles */
+/* ===== FORM BASE ===== */
+
 input, textarea, select {
   font-family: inherit;
+  font-size: inherit;
+  color: var(--text-primary);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-placeholder);
+}
+
+/* ===== UTILITY CLASSES ===== */
+
+.content-width {
+  max-width: 65ch;
+}
+
+.section-gap {
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .section-gap {
+    gap: 2rem;
+  }
 }
 `,
   });
@@ -263,7 +379,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      </head>
+      <body className="min-h-screen antialiased">
         {children}
       </body>
     </html>
@@ -307,30 +428,31 @@ export default function Home() {
 
 export default function Dashboard() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">${output.appName}</h1>
-        <p className="text-zinc-400 mt-1">${output.elevatorPitch.replace(/'/g, "\\'")}</p>
+    <div className="space-y-8">
+      {/* Page header */}
+      <div className="pb-6 border-b border-[var(--border-default)]">
+        <h1 className="text-2xl font-semibold tracking-tight">${output.appName}</h1>
+        <p className="text-[var(--text-secondary)] mt-2 max-w-2xl">${output.elevatorPitch.replace(/'/g, "\\'")}</p>
       </div>
 
       {/* Stats overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <Card>
-          <div className="text-center">
-            <p className="text-3xl font-bold text-white">${entityCount}</p>
-            <p className="text-sm text-zinc-400 mt-1">Entities</p>
+          <div className="text-center py-2">
+            <p className="text-3xl font-semibold tracking-tight">${entityCount}</p>
+            <p className="text-sm text-[var(--text-muted)] mt-1">Entities</p>
           </div>
         </Card>
         <Card>
-          <div className="text-center">
-            <p className="text-3xl font-bold text-white">${pageCount}</p>
-            <p className="text-sm text-zinc-400 mt-1">Pages</p>
+          <div className="text-center py-2">
+            <p className="text-3xl font-semibold tracking-tight">${pageCount}</p>
+            <p className="text-sm text-[var(--text-muted)] mt-1">Pages</p>
           </div>
         </Card>
         <Card>
-          <div className="text-center">
-            <p className="text-3xl font-bold text-white">${output.apis.length}</p>
-            <p className="text-sm text-zinc-400 mt-1">API Routes</p>
+          <div className="text-center py-2">
+            <p className="text-3xl font-semibold tracking-tight">${output.apis.length}</p>
+            <p className="text-sm text-[var(--text-muted)] mt-1">API Routes</p>
           </div>
         </Card>
       </div>
@@ -341,7 +463,7 @@ export default function Dashboard() {
           title="Getting Started"
           description="Quick actions to help you get started with ${output.appName}"
         />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1">
           ${output.pages.slice(0, 4).map(page => {
             const route = page.route.replace(/^\/+/, '');
             const label = route.split('/')[0] || 'Home';
@@ -349,16 +471,16 @@ export default function Dashboard() {
             return `
           <a
             href="/${route}"
-            className="flex items-center gap-3 p-4 bg-zinc-800/50 hover:bg-zinc-800 rounded-lg transition-colors group"
+            className="flex items-center gap-4 p-4 rounded-xl border border-[var(--border-default)] hover:border-[var(--border-strong)] hover:bg-[var(--bg-hover)] transition-all duration-150 group"
           >
-            <div className="w-10 h-10 bg-primary-500/10 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <div className="w-10 h-10 bg-[var(--accent-muted)] rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <div>
-              <p className="font-medium text-white group-hover:text-primary-400 transition-colors">${titleCase}</p>
-              <p className="text-sm text-zinc-500">${page.purpose.replace(/'/g, "\\'").substring(0, 50)}...</p>
+            <div className="min-w-0">
+              <p className="font-medium text-[var(--text-primary)] group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">${titleCase}</p>
+              <p className="text-sm text-[var(--text-muted)] truncate">${page.purpose.replace(/'/g, "\\'").substring(0, 50)}...</p>
             </div>
           </a>`;
           }).join('')}
@@ -371,16 +493,16 @@ export default function Dashboard() {
           title="Core Features"
           description="What ${output.appName} offers"
         />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-1">
           ${output.productSpec.coreFeatures.slice(0, 6).map((feature, i) => `
-          <div className="p-4 bg-zinc-800/30 rounded-lg">
+          <div className="p-4 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-tertiary)]">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 bg-primary-500/20 rounded flex items-center justify-center">
-                <span className="text-xs font-medium text-primary-400">${i + 1}</span>
+              <div className="w-6 h-6 bg-[var(--accent-muted)] rounded flex items-center justify-center">
+                <span className="text-xs font-semibold text-primary-600 dark:text-primary-400">${i + 1}</span>
               </div>
-              <span className="text-sm font-medium text-white">Feature ${i + 1}</span>
+              <span className="text-sm font-medium">Feature ${i + 1}</span>
             </div>
-            <p className="text-sm text-zinc-400">${feature.replace(/'/g, "\\'")}</p>
+            <p className="text-sm text-[var(--text-secondary)]">${feature.replace(/'/g, "\\'")}</p>
           </div>`).join('')}
         </div>
       </Card>

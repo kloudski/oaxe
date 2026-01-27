@@ -1,5 +1,6 @@
 import type { OaxeOutput } from '../types';
 import type { GeneratedFile } from './types';
+import { RESERVED_APP_ROUTES, getEntityBasePath, getEntityLabel } from './pages';
 
 function pascalCase(str: string): string {
   return str
@@ -54,31 +55,45 @@ export function AppShell({ children }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-[var(--bg-secondary)]">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 h-14 bg-zinc-900 border-b border-zinc-800 z-40 flex items-center px-4">
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 hover:bg-zinc-800 rounded-lg transition-colors mr-4"
-          aria-label="Toggle sidebar"
-        >
-          <svg
-            className="w-5 h-5 text-zinc-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+      <header className="fixed top-0 left-0 right-0 h-14 bg-[var(--bg-primary)] border-b border-[var(--border-default)] z-40 flex items-center justify-between px-4 shadow-[var(--shadow-xs)]">
+        <div className="flex items-center">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 hover:bg-[var(--bg-hover)] rounded-lg transition-colors mr-3"
+            aria-label="Toggle sidebar"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-          </svg>
-        </button>
-        <a href="/" className="text-lg font-semibold text-white">
-          ${output.appName}
-        </a>
+            <svg
+              className="w-5 h-5 text-[var(--text-muted)]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          </button>
+          <a href="/" className="text-base font-semibold text-[var(--text-primary)] tracking-tight">
+            ${output.appName}
+          </a>
+        </div>
+
+        {/* Header actions placeholder */}
+        <div className="flex items-center gap-2">
+          <button className="p-2 hover:bg-[var(--bg-hover)] rounded-lg transition-colors">
+            <svg className="w-5 h-5 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+          <div className="w-8 h-8 rounded-full bg-[var(--accent-muted)] flex items-center justify-center">
+            <span className="text-sm font-medium text-primary-600 dark:text-primary-400">U</span>
+          </div>
+        </div>
       </header>
 
       {/* Sidebar */}
@@ -87,10 +102,10 @@ export function AppShell({ children }: AppShellProps) {
       {/* Main content */}
       <main
         className={\`pt-14 transition-all duration-200 \${
-          sidebarOpen ? 'pl-64' : 'pl-0'
+          sidebarOpen ? 'pl-60' : 'pl-0'
         }\`}
       >
-        <div className="p-6">{children}</div>
+        <div className="p-6 md:p-8 max-w-7xl">{children}</div>
       </main>
     </div>
   );
@@ -99,39 +114,15 @@ export function AppShell({ children }: AppShellProps) {
 }
 
 function generateSidebar(output: OaxeOutput): string {
-  // Build navigation items from pages AND entities
-  // CRITICAL: Sidebar must link to base entity routes (e.g., /job not /job/[id])
-  const navItemsMap = new Map<string, { route: string; label: string }>();
+  // Build entity navigation items with collision-aware routing
+  // CRITICAL: Entities that collide with reserved routes use /e/<entity> prefix
+  const entityNavItems: { route: string; label: string }[] = [];
 
-  // First, add all entities as nav items (ensures every entity has a sidebar link)
   for (const entity of output.entities) {
-    const entitySlug = entity.name.toLowerCase();
-    const titleCase = entity.name.charAt(0).toUpperCase() + entity.name.slice(1);
-    navItemsMap.set(entitySlug, { route: `/${entitySlug}`, label: titleCase });
+    const basePath = getEntityBasePath(entity.name);
+    const label = getEntityLabel(entity.name);
+    entityNavItems.push({ route: `/${basePath}`, label });
   }
-
-  // Then add pages (may override or add to entity nav items)
-  for (const page of output.pages) {
-    if (page.route === '/') continue;
-
-    const route = page.route.replace(/^\/+/, '');
-    // Extract base route (first segment only) for sidebar links
-    // This ensures /job/[id] becomes /job in the sidebar
-    const baseRoute = route.split('/')[0];
-    if (!baseRoute) continue;
-
-    // Skip dynamic route segments (don't add [id] type routes directly)
-    if (baseRoute.startsWith('[') && baseRoute.endsWith(']')) continue;
-
-    const titleCase = baseRoute.charAt(0).toUpperCase() + baseRoute.slice(1);
-
-    // Only add if not already present (entities take precedence)
-    if (!navItemsMap.has(baseRoute)) {
-      navItemsMap.set(baseRoute, { route: `/${baseRoute}`, label: titleCase });
-    }
-  }
-
-  const uniqueNav = Array.from(navItemsMap.values());
 
   return `'use client';
 
@@ -142,43 +133,70 @@ interface SidebarProps {
   isOpen: boolean;
 }
 
-const navItems = ${JSON.stringify(uniqueNav, null, 2)};
+const entityNavItems = ${JSON.stringify(entityNavItems, null, 2)};
+
+// Helper to check if a path is active (normalizes paths for comparison)
+function isPathActive(pathname: string, route: string): boolean {
+  const normalizedPathname = pathname.replace(/\\/+$/, '').toLowerCase();
+  const normalizedRoute = route.replace(/\\/+$/, '').toLowerCase();
+
+  // Exact match
+  if (normalizedPathname === normalizedRoute) return true;
+
+  // Check if pathname starts with route (for sub-routes like /e/dashboard/123)
+  if (normalizedPathname.startsWith(normalizedRoute + '/')) return true;
+
+  return false;
+}
 
 export function Sidebar({ isOpen }: SidebarProps) {
   const pathname = usePathname();
 
+  // Dashboard is active only at root "/" and NOT when on /e/dashboard or entity pages
+  const isDashboardActive = pathname === '/' || pathname === '/dashboard';
+  const isOnEntityRoute = pathname.startsWith('/e/') || entityNavItems.some(item => isPathActive(pathname, item.route));
+  const showDashboardActive = isDashboardActive && !isOnEntityRoute;
+
   return (
     <aside
-      className={\`fixed top-14 left-0 bottom-0 w-64 bg-zinc-900 border-r border-zinc-800 transform transition-transform duration-200 z-30 \${
+      className={\`fixed top-14 left-0 bottom-0 w-60 bg-[var(--bg-primary)] border-r border-[var(--border-default)] transform transition-transform duration-200 z-30 \${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       }\`}
     >
-      <nav className="p-4 space-y-1">
+      <nav className="p-3 space-y-0.5">
+        {/* Dashboard link - Core app route, always at / */}
         <Link
           href="/"
-          className={\`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors \${
-            pathname === '/'
-              ? 'bg-primary-500/10 text-primary-400'
-              : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+          className={\`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 \${
+            showDashboardActive
+              ? 'bg-[var(--accent-muted)] text-primary-600 dark:text-primary-400'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
           }\`}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
           </svg>
           Dashboard
         </Link>
-        {navItems.map((item) => (
+
+        {/* Section label */}
+        <div className="pt-4 pb-1 px-3">
+          <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Entities</span>
+        </div>
+
+        {/* Entity nav items - use collision-aware paths */}
+        {entityNavItems.map((item) => (
           <Link
             key={item.route}
             href={item.route}
-            className={\`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors \${
-              pathname === item.route || pathname.startsWith(item.route + '/')
-                ? 'bg-primary-500/10 text-primary-400'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+            className={\`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 \${
+              isPathActive(pathname, item.route)
+                ? 'bg-[var(--accent-muted)] text-primary-600 dark:text-primary-400'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
             }\`}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             {item.label}
           </Link>
@@ -206,6 +224,7 @@ interface DataTableProps<T extends { id: string }> {
   columns: Column<T>[];
   onRowClick?: (row: T) => void;
   emptyMessage?: string;
+  isLoading?: boolean;
 }
 
 export function DataTable<T extends { id: string }>({
@@ -213,9 +232,11 @@ export function DataTable<T extends { id: string }>({
   columns,
   onRowClick,
   emptyMessage = 'No data available',
+  isLoading = false,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<keyof T | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const handleSort = (key: keyof T) => {
     if (sortKey === key) {
@@ -224,6 +245,11 @@ export function DataTable<T extends { id: string }>({
       setSortKey(key);
       setSortDir('asc');
     }
+  };
+
+  const handleRowClick = (row: T) => {
+    setSelectedId(row.id === selectedId ? null : row.id);
+    onRowClick?.(row);
   };
 
   const sortedData = [...data].sort((a, b) => {
@@ -236,58 +262,95 @@ export function DataTable<T extends { id: string }>({
   });
 
   const formatValue = (value: unknown): string => {
-    if (value === null || value === undefined) return '-';
+    if (value === null || value === undefined) return '—';
     if (value instanceof Date) return value.toLocaleDateString();
     if (typeof value === 'boolean') return value ? 'Yes' : 'No';
     if (typeof value === 'object') return JSON.stringify(value);
     return String(value);
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-default)] overflow-hidden">
+        <div className="p-12 text-center">
+          <div className="inline-flex items-center gap-2 text-[var(--text-muted)]">
+            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            <span className="text-sm">Loading...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state
   if (data.length === 0) {
     return (
-      <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-12 text-center">
-        <p className="text-zinc-500">{emptyMessage}</p>
+      <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-default)] overflow-hidden">
+        <div className="p-12 text-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center">
+            <svg className="w-6 h-6 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            </svg>
+          </div>
+          <p className="text-[var(--text-secondary)] font-medium">{emptyMessage}</p>
+          <p className="text-sm text-[var(--text-muted)] mt-1">Create your first item to get started</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+    <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-default)] overflow-hidden shadow-[var(--shadow-sm)]">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-zinc-800">
-              {columns.map((col) => (
+            <tr className="border-b border-[var(--border-default)] bg-[var(--bg-secondary)]">
+              {columns.map((col, index) => (
                 <th
                   key={String(col.key)}
                   onClick={() => handleSort(col.key)}
-                  className="px-4 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
+                  className={\`px-4 py-3 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none \${
+                    index !== columns.length - 1 ? 'border-r border-[var(--border-subtle)]' : ''
+                  }\`}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     {col.header}
                     {sortKey === col.key && (
-                      <span className="text-primary-400">
-                        {sortDir === 'asc' ? '↑' : '↓'}
-                      </span>
+                      <svg className="w-3.5 h-3.5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {sortDir === 'asc'
+                          ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                          : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        }
+                      </svg>
                     )}
                   </div>
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-800">
-            {sortedData.map((row) => (
+          <tbody>
+            {sortedData.map((row, rowIndex) => (
               <tr
                 key={row.id}
-                onClick={() => onRowClick?.(row)}
+                onClick={() => handleRowClick(row)}
                 className={\`\${
-                  onRowClick ? 'cursor-pointer hover:bg-zinc-800/50' : ''
+                  onRowClick ? 'cursor-pointer' : ''
+                } \${
+                  selectedId === row.id
+                    ? 'bg-[var(--accent-muted)]'
+                    : 'hover:bg-[var(--bg-hover)]'
+                } \${
+                  rowIndex !== sortedData.length - 1 ? 'border-b border-[var(--border-subtle)]' : ''
                 } transition-colors\`}
               >
                 {columns.map((col) => (
                   <td
                     key={String(col.key)}
-                    className="px-4 py-3 text-sm text-zinc-300 whitespace-nowrap"
+                    className="px-4 py-3.5 text-sm text-[var(--text-primary)]"
                   >
                     {col.render
                       ? col.render(row[col.key], row)
@@ -316,6 +379,7 @@ interface FieldConfig {
   label: string;
   type: 'text' | 'number' | 'email' | 'url' | 'date' | 'datetime-local' | 'checkbox' | 'textarea' | 'select';
   placeholder?: string;
+  helperText?: string;
   options?: { value: string; label: string }[];
   required?: boolean;
 }
@@ -324,6 +388,7 @@ interface EntityFormProps<T> {
   fields: FieldConfig[];
   schema?: ZodSchema<T>;
   onSubmit: (data: T) => void | Promise<void>;
+  onCancel?: () => void;
   submitLabel?: string;
   initialValues?: Partial<T>;
 }
@@ -332,6 +397,7 @@ export function EntityForm<T extends Record<string, unknown>>({
   fields,
   schema,
   onSubmit,
+  onCancel,
   submitLabel = 'Create',
   initialValues = {},
 }: EntityFormProps<T>) {
@@ -374,22 +440,26 @@ export function EntityForm<T extends Record<string, unknown>>({
     }
   };
 
+  const baseInputClass =
+    'w-full px-3.5 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-default)] rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] transition-all duration-150 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20';
+
+  const errorInputClass = 'border-red-400 dark:border-red-500 focus:border-red-500 focus:ring-red-500/20';
+
   const renderField = (field: FieldConfig) => {
     const value = values[field.name] ?? '';
-    const error = errors[field.name];
-    const baseInputClass =
-      'w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors';
+    const hasError = Boolean(errors[field.name]);
+    const inputClass = hasError ? \`\${baseInputClass} \${errorInputClass}\` : baseInputClass;
 
     if (field.type === 'checkbox') {
       return (
-        <label className="flex items-center gap-3 cursor-pointer">
+        <label className="inline-flex items-center gap-3 cursor-pointer py-1">
           <input
             type="checkbox"
             checked={Boolean(value)}
             onChange={(e) => handleChange(field.name, e.target.checked)}
-            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-primary-500 focus:ring-primary-500"
+            className="w-4 h-4 rounded border-[var(--border-default)] bg-[var(--bg-primary)] text-primary-500 focus:ring-primary-500 focus:ring-offset-0 transition-colors"
           />
-          <span className="text-sm text-zinc-300">{field.label}</span>
+          <span className="text-sm text-[var(--text-primary)]">{field.label}</span>
         </label>
       );
     }
@@ -399,9 +469,9 @@ export function EntityForm<T extends Record<string, unknown>>({
         <textarea
           value={String(value)}
           onChange={(e) => handleChange(field.name, e.target.value)}
-          placeholder={field.placeholder}
+          placeholder={field.placeholder || \`Enter \${field.label.toLowerCase()}\`}
           rows={4}
-          className={\`\${baseInputClass} resize-none\`}
+          className={\`\${inputClass} resize-none\`}
         />
       );
     }
@@ -411,7 +481,7 @@ export function EntityForm<T extends Record<string, unknown>>({
         <select
           value={String(value)}
           onChange={(e) => handleChange(field.name, e.target.value)}
-          className={baseInputClass}
+          className={inputClass}
         >
           <option value="">Select {field.label.toLowerCase()}</option>
           {field.options?.map((opt) => (
@@ -433,42 +503,73 @@ export function EntityForm<T extends Record<string, unknown>>({
             field.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value
           )
         }
-        placeholder={field.placeholder}
-        className={baseInputClass}
+        placeholder={field.placeholder || \`Enter \${field.label.toLowerCase()}\`}
+        className={inputClass}
       />
     );
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       {errors._form && (
-        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
-          {errors._form}
+        <div className="p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg flex items-start gap-3">
+          <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-sm text-red-600 dark:text-red-400">{errors._form}</p>
         </div>
       )}
 
-      {fields.map((field) => (
-        <div key={field.name} className="space-y-1">
-          {field.type !== 'checkbox' && (
-            <label className="block text-sm font-medium text-zinc-300">
-              {field.label}
-              {field.required && <span className="text-red-400 ml-1">*</span>}
-            </label>
-          )}
-          {renderField(field)}
-          {errors[field.name] && (
-            <p className="text-sm text-red-400">{errors[field.name]}</p>
-          )}
-        </div>
-      ))}
+      <div className="space-y-5">
+        {fields.map((field) => (
+          <div key={field.name}>
+            {field.type !== 'checkbox' && (
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
+                {field.label}
+                {field.required && <span className="text-red-500 ml-0.5">*</span>}
+              </label>
+            )}
+            {renderField(field)}
+            {field.helperText && !errors[field.name] && (
+              <p className="text-xs text-[var(--text-muted)] mt-1.5">{field.helperText}</p>
+            )}
+            {errors[field.name] && (
+              <p className="text-sm text-red-500 mt-1.5 flex items-center gap-1.5">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {errors[field.name]}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-500/50 text-white font-medium rounded-lg transition-colors"
-      >
-        {isSubmitting ? 'Submitting...' : submitLabel}
-      </button>
+      {/* Form actions */}
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-default)]">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-primary)] border border-[var(--border-default)] hover:border-[var(--border-strong)] rounded-lg transition-all duration-150"
+          >
+            Cancel
+          </button>
+        )}
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="px-5 py-2.5 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-all duration-150 flex items-center gap-2"
+        >
+          {isSubmitting && (
+            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+          )}
+          {isSubmitting ? 'Saving...' : submitLabel}
+        </button>
+      </div>
     </form>
   );
 }
@@ -481,36 +582,49 @@ function generateStatusBadge(): string {
   variant?: 'default' | 'success' | 'warning' | 'error' | 'info';
 }
 
+// Light-mode-first semantic color system
 const variantStyles: Record<string, string> = {
-  default: 'bg-zinc-700 text-zinc-300',
-  success: 'bg-green-500/10 text-green-400 border border-green-500/20',
-  warning: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
-  error: 'bg-red-500/10 text-red-400 border border-red-500/20',
-  info: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+  default: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300',
+  success: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400',
+  warning: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400',
+  error: 'bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-400',
+  info: 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400',
 };
 
 const statusVariants: Record<string, string> = {
   active: 'success',
   completed: 'success',
   done: 'success',
+  approved: 'success',
   pending: 'warning',
   waiting: 'warning',
+  review: 'warning',
+  draft: 'warning',
   in_progress: 'info',
   processing: 'info',
+  new: 'info',
+  open: 'info',
   error: 'error',
   failed: 'error',
   cancelled: 'error',
+  rejected: 'error',
   archived: 'default',
   inactive: 'default',
+  closed: 'default',
 };
 
 export function StatusBadge({ status, variant }: StatusBadgeProps) {
-  const resolvedVariant = variant || statusVariants[status.toLowerCase()] || 'default';
+  const resolvedVariant = variant || statusVariants[status.toLowerCase().replace(/[\\s-]/g, '_')] || 'default';
   const styles = variantStyles[resolvedVariant];
 
+  // Format display text (capitalize, replace underscores)
+  const displayText = status
+    .replace(/[_-]/g, ' ')
+    .replace(/\\b\\w/g, (c) => c.toUpperCase());
+
   return (
-    <span className={\`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium \${styles}\`}>
-      {status}
+    <span className={\`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium tracking-wide \${styles}\`}>
+      {displayText}
     </span>
   );
 }
@@ -526,17 +640,18 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
 }
 
+// Light-mode-first button variants
 const variantStyles = {
-  primary: 'bg-primary-500 hover:bg-primary-600 text-white',
-  secondary: 'bg-zinc-700 hover:bg-zinc-600 text-white',
-  ghost: 'bg-transparent hover:bg-zinc-800 text-zinc-300',
-  danger: 'bg-red-500 hover:bg-red-600 text-white',
+  primary: 'bg-primary-500 hover:bg-primary-600 text-white shadow-sm',
+  secondary: 'bg-[var(--bg-primary)] border border-[var(--border-default)] hover:border-[var(--border-strong)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)]',
+  ghost: 'bg-transparent hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
+  danger: 'bg-red-500 hover:bg-red-600 text-white shadow-sm',
 };
 
 const sizeStyles = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-3 text-base',
+  sm: 'px-3 py-1.5 text-sm gap-1.5',
+  md: 'px-4 py-2 text-sm gap-2',
+  lg: 'px-5 py-2.5 text-base gap-2',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -545,11 +660,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         disabled={disabled || isLoading}
-        className={\`inline-flex items-center justify-center font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed \${variantStyles[variant]} \${sizeStyles[size]} \${className}\`}
+        className={\`inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed \${variantStyles[variant]} \${sizeStyles[size]} \${className}\`}
         {...props}
       >
         {isLoading && (
-          <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
           </svg>
@@ -574,13 +689,13 @@ function generateCard(): string {
 const paddingStyles = {
   none: '',
   sm: 'p-4',
-  md: 'p-6',
-  lg: 'p-8',
+  md: 'p-5',
+  lg: 'p-6',
 };
 
 export function Card({ children, className = '', padding = 'md' }: CardProps) {
   return (
-    <div className={\`bg-zinc-900 rounded-xl border border-zinc-800 \${paddingStyles[padding]} \${className}\`}>
+    <div className={\`bg-[var(--bg-primary)] rounded-xl border border-[var(--border-default)] shadow-[var(--shadow-sm)] \${paddingStyles[padding]} \${className}\`}>
       {children}
     </div>
   );
@@ -594,12 +709,25 @@ interface CardHeaderProps {
 
 export function CardHeader({ title, description, action }: CardHeaderProps) {
   return (
-    <div className="flex items-start justify-between mb-4">
+    <div className="flex items-start justify-between mb-5 pb-4 border-b border-[var(--border-subtle)]">
       <div>
-        <h3 className="text-lg font-semibold text-white">{title}</h3>
-        {description && <p className="text-sm text-zinc-400 mt-1">{description}</p>}
+        <h3 className="text-base font-semibold text-[var(--text-primary)]">{title}</h3>
+        {description && <p className="text-sm text-[var(--text-muted)] mt-1">{description}</p>}
       </div>
       {action}
+    </div>
+  );
+}
+
+interface CardFooterProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function CardFooter({ children, className = '' }: CardFooterProps) {
+  return (
+    <div className={\`mt-5 pt-4 border-t border-[var(--border-subtle)] flex items-center justify-end gap-3 \${className}\`}>
+      {children}
     </div>
   );
 }
@@ -660,7 +788,7 @@ export { DataTable } from './DataTable';
 export { EntityForm } from './EntityForm';
 export { StatusBadge } from './StatusBadge';
 export { Button } from './Button';
-export { Card, CardHeader } from './Card';
+export { Card, CardHeader, CardFooter } from './Card';
 `,
   });
 

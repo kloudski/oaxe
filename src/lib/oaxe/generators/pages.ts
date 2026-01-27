@@ -1,6 +1,32 @@
 import type { OaxeOutput } from '../types';
 import type { GeneratedFile } from './types';
 
+// Reserved app routes that entity slugs cannot collide with
+// If an entity name matches one of these, its routes are prefixed with /e/
+export const RESERVED_APP_ROUTES = new Set([
+  'dashboard',
+  'settings',
+  'profile',
+  'billing',
+  'reports',
+  'admin',
+  'api',
+  'auth',
+]);
+
+// Helper to get the base path for an entity (checks for collision with reserved routes)
+export function getEntityBasePath(entitySlug: string): string {
+  const normalized = entitySlug.toLowerCase();
+  return RESERVED_APP_ROUTES.has(normalized) ? `e/${normalized}` : normalized;
+}
+
+// Helper to get the label for an entity (appends " (Entity)" if collides with reserved routes)
+export function getEntityLabel(entityName: string): string {
+  const normalized = entityName.toLowerCase();
+  const titleCase = entityName.charAt(0).toUpperCase() + entityName.slice(1);
+  return RESERVED_APP_ROUTES.has(normalized) ? `${titleCase} (Entity)` : titleCase;
+}
+
 function sanitizeRoute(route: string): string {
   return route
     .replace(/^\/+/, '')
@@ -64,27 +90,27 @@ function mapFieldToInputType(fieldName: string, type: string): string {
 }
 
 function generateEntityListPage(
-  route: string,
+  basePath: string,
   purpose: string,
   entity: OaxeOutput['entities'][0],
   appName: string
 ): string {
   const entityName = pascalCase(entity.name);
   const entityVar = camelCase(entity.name);
-  const pageName = route.split('/').pop() || 'Page';
-  const titleCase = pageName.charAt(0).toUpperCase() + pageName.slice(1);
+  const label = getEntityLabel(entity.name);
 
   // Generate column definitions
   const columns = entity.fields.slice(0, 5).map(field => {
     const fieldName = camelCase(field.name);
-    const label = field.name.charAt(0).toUpperCase() + field.name.slice(1).replace(/([A-Z])/g, ' $1');
-    return `    { key: '${fieldName}' as keyof ${entityName}, header: '${label}' },`;
+    const fieldLabel = field.name.charAt(0).toUpperCase() + field.name.slice(1).replace(/([A-Z])/g, ' $1');
+    return `    { key: '${fieldName}' as keyof ${entityName}, header: '${fieldLabel}' },`;
   }).join('\n');
 
   return `'use client';
 
 import { useState } from 'react';
-import { DataTable, Card, CardHeader, Button, StatusBadge } from '@/components';
+import { useRouter } from 'next/navigation';
+import { DataTable, Card, Button } from '@/components';
 import type { ${entityName} } from '@/lib/db';
 import { ${entityVar}Seed } from '@/lib/db/seed';
 
@@ -92,43 +118,46 @@ const columns = [
 ${columns}
 ];
 
-export default function ${titleCase}Page() {
+export default function ${entityName}ListPage() {
+  const router = useRouter();
   const [data] = useState<${entityName}[]>(${entityVar}Seed);
-  const [showForm, setShowForm] = useState(false);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Page header */}
+      <div className="flex items-start justify-between pb-6 border-b border-[var(--border-default)]">
         <div>
-          <h1 className="text-2xl font-bold text-white">${titleCase}</h1>
-          <p className="text-zinc-400 mt-1">${purpose.replace(/'/g, "\\'")}</p>
+          <h1 className="text-2xl font-semibold tracking-tight">${label}</h1>
+          <p className="text-[var(--text-secondary)] mt-1">${purpose.replace(/'/g, "\\'")}</p>
         </div>
-        <Button onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancel' : 'Create ${entityName}'}
+        <Button onClick={() => router.push('/${basePath}/new')}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          New ${entityName}
         </Button>
       </div>
 
-      {showForm && (
-        <Card>
-          <CardHeader title="Create ${entityName}" description="Add a new ${entityName.toLowerCase()} to the system" />
-          <a href="/${route}/new" className="text-primary-400 hover:text-primary-300 text-sm">
-            Go to create form →
-          </a>
-        </Card>
-      )}
-
+      {/* Table card */}
       <Card padding="none">
-        <div className="p-4 border-b border-zinc-800">
+        <div className="px-5 py-4 border-b border-[var(--border-subtle)]">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-zinc-400">
-              Showing <span className="font-medium text-white">{data.length}</span> ${entityName.toLowerCase()}s
+            <p className="text-sm text-[var(--text-muted)]">
+              <span className="font-medium text-[var(--text-primary)]">{data.length}</span> ${entityName.toLowerCase()}s
             </p>
+            <div className="flex items-center gap-2">
+              <button className="p-2 hover:bg-[var(--bg-hover)] rounded-lg transition-colors">
+                <svg className="w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
         <DataTable
           data={data}
           columns={columns}
-          onRowClick={(row) => console.log('Clicked:', row)}
+          onRowClick={(row) => router.push(\`/${basePath}/\${row.id}\`)}
           emptyMessage="No ${entityName.toLowerCase()}s found"
         />
       </Card>
@@ -139,20 +168,19 @@ export default function ${titleCase}Page() {
 }
 
 function generateEntityFormPage(
-  route: string,
+  basePath: string,
   entity: OaxeOutput['entities'][0]
 ): string {
   const entityName = pascalCase(entity.name);
-  const pageName = route.split('/')[0] || 'Entity';
-  const titleCase = pageName.charAt(0).toUpperCase() + pageName.slice(1);
+  const label = getEntityLabel(entity.name);
 
   // Generate field configurations
   const fieldConfigs = entity.fields.map(field => {
     const fieldName = camelCase(field.name);
-    const label = field.name.charAt(0).toUpperCase() + field.name.slice(1).replace(/([A-Z])/g, ' $1');
+    const fieldLabel = field.name.charAt(0).toUpperCase() + field.name.slice(1).replace(/([A-Z])/g, ' $1');
     const inputType = mapFieldToInputType(field.name, field.type);
 
-    let config = `    { name: '${fieldName}', label: '${label}', type: '${inputType}' as const`;
+    let config = `    { name: '${fieldName}', label: '${fieldLabel}', type: '${inputType}' as const, required: true`;
 
     if (inputType === 'select') {
       config += `, options: [
@@ -169,7 +197,7 @@ function generateEntityFormPage(
   return `'use client';
 
 import { useRouter } from 'next/navigation';
-import { EntityForm, Card, CardHeader } from '@/components';
+import { EntityForm, Card, CardHeader, Button } from '@/components';
 import { ${entityName}Schema } from '@/lib/db';
 
 const fields = [
@@ -182,26 +210,38 @@ export default function Create${entityName}Page() {
   const handleSubmit = async (data: Record<string, unknown>) => {
     console.log('Creating ${entityName}:', data);
     // TODO: Call API to create ${entityName}
-    // await fetch('/api/${route}', { method: 'POST', body: JSON.stringify(data) });
-    router.push('/${route.split('/')[0]}');
+    // await fetch('/api/${basePath}', { method: 'POST', body: JSON.stringify(data) });
+    router.push('/${basePath}');
   };
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Create ${entityName}</h1>
-        <p className="text-zinc-400 mt-1">Add a new ${entityName.toLowerCase()} to the system</p>
+      {/* Page header */}
+      <div className="flex items-center justify-between pb-6 border-b border-[var(--border-default)]">
+        <div>
+          <nav className="text-sm text-[var(--text-muted)] mb-1">
+            <a href="/${basePath}" className="hover:text-[var(--text-primary)] transition-colors">${label}</a>
+            <span className="mx-2">/</span>
+            <span>New</span>
+          </nav>
+          <h1 className="text-2xl font-semibold tracking-tight">Create ${entityName}</h1>
+        </div>
+        <Button variant="ghost" onClick={() => router.back()}>
+          Cancel
+        </Button>
       </div>
 
-      <Card>
+      {/* Form card */}
+      <Card padding="lg">
         <CardHeader
           title="${entityName} Details"
-          description="Fill in the information below"
+          description="Fill in the information below to create a new ${entityName.toLowerCase()}"
         />
         <EntityForm
           fields={fields}
           schema={${entityName}Schema}
           onSubmit={handleSubmit}
+          onCancel={() => router.back()}
           submitLabel="Create ${entityName}"
         />
       </Card>
@@ -212,21 +252,20 @@ export default function Create${entityName}Page() {
 }
 
 function generateEntityDetailPage(
-  route: string,
+  basePath: string,
   entity: OaxeOutput['entities'][0]
 ): string {
   const entityName = pascalCase(entity.name);
   const entityVar = camelCase(entity.name);
-  const pageName = route.split('/')[0] || 'Entity';
-  const titleCase = pageName.charAt(0).toUpperCase() + pageName.slice(1);
+  const label = getEntityLabel(entity.name);
 
   // Generate field display rows
   const fieldRows = entity.fields.map(field => {
     const fieldName = camelCase(field.name);
-    const label = field.name.charAt(0).toUpperCase() + field.name.slice(1).replace(/([A-Z])/g, ' $1');
-    return `          <div className="py-3 border-b border-zinc-800 last:border-0">
-            <dt className="text-sm text-zinc-500">${label}</dt>
-            <dd className="mt-1 text-white">{String(item.${fieldName})}</dd>
+    const fieldLabel = field.name.charAt(0).toUpperCase() + field.name.slice(1).replace(/([A-Z])/g, ' $1');
+    return `          <div className="py-4 border-b border-[var(--border-subtle)] last:border-0">
+            <dt className="text-sm font-medium text-[var(--text-muted)]">${fieldLabel}</dt>
+            <dd className="mt-1 text-[var(--text-primary)]">{String(item.${fieldName})}</dd>
           </div>`;
   }).join('\n');
 
@@ -246,10 +285,16 @@ export default function ${entityName}DetailPage() {
 
   if (!item) {
     return (
-      <div className="text-center py-12">
-        <p className="text-zinc-400">${entityName} not found</p>
-        <Button onClick={() => router.push('/${route}')} className="mt-4">
-          Back to ${titleCase}
+      <div className="text-center py-16">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center">
+          <svg className="w-8 h-8 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <p className="text-[var(--text-secondary)] font-medium">${entityName} not found</p>
+        <p className="text-sm text-[var(--text-muted)] mt-1">The requested item could not be found</p>
+        <Button onClick={() => router.push('/${basePath}')} className="mt-6">
+          Back to ${label}
         </Button>
       </div>
     );
@@ -257,22 +302,36 @@ export default function ${entityName}DetailPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Page header */}
+      <div className="flex items-center justify-between pb-6 border-b border-[var(--border-default)]">
         <div>
-          <h1 className="text-2xl font-bold text-white">${entityName} Details</h1>
-          <p className="text-zinc-400 mt-1">Viewing ${entityName.toLowerCase()} {id}</p>
+          <nav className="text-sm text-[var(--text-muted)] mb-1">
+            <a href="/${basePath}" className="hover:text-[var(--text-primary)] transition-colors">${label}</a>
+            <span className="mx-2">/</span>
+            <span>{id}</span>
+          </nav>
+          <h1 className="text-2xl font-semibold tracking-tight">${entityName} Details</h1>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => router.push('/${route}')}>
+          <Button variant="secondary" onClick={() => router.push('/${basePath}')}>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
             Back
           </Button>
-          <Button>Edit</Button>
+          <Button>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Edit
+          </Button>
         </div>
       </div>
 
-      <Card>
+      {/* Details card */}
+      <Card padding="lg">
         <CardHeader title="${entityName} Information" />
-        <dl className="divide-y divide-zinc-800">
+        <dl>
 ${fieldRows}
         </dl>
       </Card>
@@ -295,23 +354,24 @@ function generateSimplePage(
 export default function ${titleCase}Page() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">${titleCase}</h1>
-        <p className="text-zinc-400 mt-1">${purpose.replace(/'/g, "\\'")}</p>
+      {/* Page header */}
+      <div className="pb-6 border-b border-[var(--border-default)]">
+        <h1 className="text-2xl font-semibold tracking-tight">${titleCase}</h1>
+        <p className="text-[var(--text-secondary)] mt-1">${purpose.replace(/'/g, "\\'")}</p>
       </div>
 
-      <Card>
+      <Card padding="lg">
         <CardHeader
           title="${titleCase} Content"
           description="This page is ready for implementation"
         />
         <div className="space-y-4">
-          <p className="text-zinc-400">
+          <p className="text-[var(--text-secondary)]">
             This is the ${titleCase.toLowerCase()} page. Add your content and functionality here.
           </p>
-          <div className="p-4 bg-zinc-800/50 rounded-lg">
-            <p className="text-sm text-zinc-500">
-              Purpose: ${purpose.replace(/'/g, "\\'")}
+          <div className="p-4 bg-[var(--bg-tertiary)] rounded-lg border border-[var(--border-subtle)]">
+            <p className="text-sm text-[var(--text-muted)]">
+              <span className="font-medium text-[var(--text-secondary)]">Purpose:</span> ${purpose.replace(/'/g, "\\'")}
             </p>
           </div>
         </div>
@@ -343,20 +403,23 @@ export function generatePages(output: OaxeOutput): GeneratedFile[] {
       const isBaseEntityRoute = route === pageName;
 
       if (isBaseEntityRoute) {
+        // Get collision-aware base path for this entity
+        const basePath = getEntityBasePath(matchedEntity.name);
+
         // Generate entity list page
-        const listPath = `src/app/(app)/${route}/page.tsx`;
-        const listContent = generateEntityListPage(route, page.purpose, matchedEntity, output.appName);
+        const listPath = `src/app/(app)/${basePath}/page.tsx`;
+        const listContent = generateEntityListPage(basePath, page.purpose, matchedEntity, output.appName);
         files.push({ path: listPath, content: listContent });
         generatedEntityIndexPages.add(matchedEntity.name.toLowerCase());
 
         // Generate entity create form page
-        const formPath = `src/app/(app)/${route}/new/page.tsx`;
-        const formContent = generateEntityFormPage(route, matchedEntity);
+        const formPath = `src/app/(app)/${basePath}/new/page.tsx`;
+        const formContent = generateEntityFormPage(basePath, matchedEntity);
         files.push({ path: formPath, content: formContent });
 
         // Generate entity detail page
-        const detailPath = `src/app/(app)/${route}/[id]/page.tsx`;
-        const detailContent = generateEntityDetailPage(route, matchedEntity);
+        const detailPath = `src/app/(app)/${basePath}/[id]/page.tsx`;
+        const detailContent = generateEntityDetailPage(basePath, matchedEntity);
         files.push({ path: detailPath, content: detailContent });
       } else {
         // This is a sub-route (like /job/[id]), generate it as specified
@@ -378,11 +441,13 @@ export function generatePages(output: OaxeOutput): GeneratedFile[] {
     const entitySlug = entity.name.toLowerCase();
 
     if (!generatedEntityIndexPages.has(entitySlug)) {
+      // Get collision-aware base path for this entity
+      const basePath = getEntityBasePath(entity.name);
+
       // Generate missing entity index page
-      const route = entitySlug;
-      const listPath = `src/app/(app)/${route}/page.tsx`;
+      const listPath = `src/app/(app)/${basePath}/page.tsx`;
       const listContent = generateEntityListPage(
-        route,
+        basePath,
         `Manage ${entity.name}s`,
         entity,
         output.appName
@@ -390,13 +455,13 @@ export function generatePages(output: OaxeOutput): GeneratedFile[] {
       files.push({ path: listPath, content: listContent });
 
       // Generate create form page
-      const formPath = `src/app/(app)/${route}/new/page.tsx`;
-      const formContent = generateEntityFormPage(route, entity);
+      const formPath = `src/app/(app)/${basePath}/new/page.tsx`;
+      const formContent = generateEntityFormPage(basePath, entity);
       files.push({ path: formPath, content: formContent });
 
       // Generate detail page
-      const detailPath = `src/app/(app)/${route}/[id]/page.tsx`;
-      const detailContent = generateEntityDetailPage(route, entity);
+      const detailPath = `src/app/(app)/${basePath}/[id]/page.tsx`;
+      const detailContent = generateEntityDetailPage(basePath, entity);
       files.push({ path: detailPath, content: detailContent });
 
       generatedEntityIndexPages.add(entitySlug);

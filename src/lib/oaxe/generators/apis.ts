@@ -86,7 +86,7 @@ export function generateApis(output: OaxeOutput): GeneratedFile[] {
   }
 
   // Generate one file per path with all methods
-  for (const [path, { methods, purposes, originalPath, entity }] of apisByPath) {
+  for (const [path, { methods, purposes, originalPath, entity }] of Array.from(apisByPath)) {
     const filePath = `src/app/api/${path}/route.ts`;
 
     // Generate combined route file with all methods

@@ -3,7 +3,7 @@ import path from 'path';
 import type { OaxeOutput } from '../types';
 import type { GenerationResult, FileTreeNode, GeneratedFile, GeneratorOptions } from './types';
 import { generateScaffold } from './scaffold';
-import { generatePages } from './pages';
+import { generatePages, getEntityBasePath } from './pages';
 import { generateApis } from './apis';
 import { generateSchema } from './schema';
 import { generateSeed } from './seed';
@@ -106,18 +106,21 @@ export async function generateApp(
       .filter(f => f.path.includes('src/app/(app)/') && f.path.endsWith('/page.tsx'))
       .map(f => {
         // Extract route from path: src/app/(app)/job/page.tsx -> job
-        const match = f.path.match(/src\/app\/\(app\)\/([^/]+)\/page\.tsx$/);
+        // Also handles: src/app/(app)/e/dashboard/page.tsx -> e/dashboard
+        const match = f.path.match(/src\/app\/\(app\)\/(.+?)\/page\.tsx$/);
         return match ? match[1] : null;
       })
       .filter(Boolean)
   );
 
   // Get all sidebar routes (from entities + pages)
+  // Use collision-aware base paths for entities
   const sidebarRoutes = new Set<string>();
 
-  // All entities need index pages
+  // All entities need index pages (use collision-aware paths)
   for (const entity of output.entities) {
-    sidebarRoutes.add(entity.name.toLowerCase());
+    const basePath = getEntityBasePath(entity.name);
+    sidebarRoutes.add(basePath);
   }
 
   // All page base routes need pages
@@ -131,26 +134,29 @@ export async function generateApp(
   }
 
   // Generate placeholder pages for any missing routes
-  for (const route of sidebarRoutes) {
+  for (const route of Array.from(sidebarRoutes)) {
     if (!generatedPagePaths.has(route)) {
-      const titleCase = route.charAt(0).toUpperCase() + route.slice(1);
+      // Get the display name (last segment for e/dashboard -> Dashboard)
+      const displayName = route.includes('/') ? route.split('/').pop()! : route;
+      const titleCase = displayName.charAt(0).toUpperCase() + displayName.slice(1);
       const placeholderContent = `import { Card, CardHeader } from '@/components';
 
 export default function ${titleCase}Page() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">${titleCase}</h1>
-        <p className="text-zinc-400 mt-1">Manage ${titleCase.toLowerCase()} data</p>
+      {/* Page header */}
+      <div className="pb-6 border-b border-[var(--border-default)]">
+        <h1 className="text-2xl font-semibold tracking-tight">${titleCase}</h1>
+        <p className="text-[var(--text-secondary)] mt-1">Manage ${titleCase.toLowerCase()} data</p>
       </div>
 
-      <Card>
+      <Card padding="lg">
         <CardHeader
           title="${titleCase}"
           description="This page is ready for implementation"
         />
-        <div className="p-4 bg-zinc-800/50 rounded-lg">
-          <p className="text-sm text-zinc-400">
+        <div className="p-4 bg-[var(--bg-tertiary)] rounded-lg border border-[var(--border-subtle)]">
+          <p className="text-sm text-[var(--text-muted)]">
             Content for ${titleCase.toLowerCase()} will appear here.
           </p>
         </div>

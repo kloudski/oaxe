@@ -222,6 +222,78 @@ All UX must be derived strictly from planner output.
 - apis.ts: Fixed hasParams to detect `:id` syntax
 - schema.ts: Added file/email/url type mappings
 
+**Patch (2026-01-27): Nav/Route Collision Fix**
+- Fixed duplicate "Dashboard" nav and route collisions between core app routes and entity routes
+- Added RESERVED_APP_ROUTES set: dashboard, settings, profile, billing, reports, admin, api, auth
+- pages.ts: Entity routes that collide with reserved routes are now placed under /e/<entity>
+- pages.ts: Added getEntityBasePath() and getEntityLabel() helpers for collision-aware routing
+- components.ts: Sidebar now separates App section (Dashboard) from Entities section
+- components.ts: Entity labels append " (Entity)" when colliding with reserved route names
+- components.ts: Active-state logic now uses path normalization (isPathActive helper)
+- index.ts: Validation updated to use collision-aware base paths
+- tsconfig.json: Excluded generated/ directory from parent project compilation
+
+---
+
+## [M7++] Design Excellence Layer (Light-first)
+
+**Status:** Complete
+**Owner:** @engineer
+**Dependencies:** [M7-plus]
+**Priority:** P0
+
+### Objective
+Make generated apps look premium in LIGHT MODE first (Stripe/Notion vibe), while keeping dark mode as secondary theme. Improve typography hierarchy, spacing rhythm, tables, forms, buttons, cards, and shell composition.
+
+### Acceptance Criteria
+- [x] Light-mode-first visual system with CSS custom properties
+- [x] Typography hierarchy (heading scale, body, muted text)
+- [x] AppShell polish (clean sidebar, page header, improved spacing)
+- [x] DataTable polish (comfortable density, hover states, empty/loading states)
+- [x] EntityForm polish (field grouping, labels, helper text, focus rings)
+- [x] Button variants (primary, secondary, ghost, danger)
+- [x] Card improvements (header/content/footer spacing)
+- [x] StatusBadge (subtle light-mode semantic chips)
+- [x] Globals.css improvements (selection, scrollbar, focus rings)
+- [x] No new dependencies added
+- [x] Build passes
+
+### Performance Implications
+- No additional runtime overhead
+- CSS custom properties for efficient theming
+- No layout shifts on theme change
+
+### Security Implications
+- No security impact (UI-only changes)
+
+### Tasks
+- [x] Create light-mode-first CSS variable system in globals.css — @engineer
+- [x] Update AppShell with premium light-mode styling — @engineer
+- [x] Update Sidebar with clean, compact design — @engineer
+- [x] Update DataTable with Stripe/Notion quality — @engineer
+- [x] Update EntityForm with improved field composition — @engineer
+- [x] Update Button with light-mode-first variants — @engineer
+- [x] Update Card with header/content/footer structure — @engineer
+- [x] Update StatusBadge with light-mode semantic colors — @engineer
+- [x] Update page generators with light-mode styling — @engineer
+- [x] Fix TypeScript iteration issues in apis.ts and index.ts — @engineer
+
+### Notes
+Light-mode-first design system using CSS custom properties:
+- `--bg-primary/secondary/tertiary` for background hierarchy
+- `--text-primary/secondary/muted` for text hierarchy
+- `--border-default/subtle/strong` for border variations
+- `--shadow-xs/sm/md/lg` for elevation system
+- `--accent-muted` for primary color backgrounds
+- Dark mode via `.dark` class with L-shift values
+
+Files modified:
+- generators/scaffold.ts: globals.css, layout.tsx, dashboard page
+- generators/components.ts: AppShell, Sidebar, DataTable, EntityForm, StatusBadge, Button, Card
+- generators/pages.ts: Entity list, form, and detail pages
+- generators/index.ts: Placeholder page styling
+- generators/apis.ts: Fixed Map iteration for TypeScript compatibility
+
 ---
 
 ## [M1] Product Specification
