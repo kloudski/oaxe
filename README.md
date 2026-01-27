@@ -1,8 +1,8 @@
-# Atlas9
+# Oaxe
 
 **Product Replication, Invention, Branding, and Evolution Engine**
 
-Atlas9 is an autonomous system that generates production-grade software products from a single prompt. It replicates existing products faithfully, invents new category-defining products, generates distinctive brand identities, and evolves products through structured milestones.
+Oaxe is an autonomous system that generates production-grade software products from a single prompt. It replicates existing products faithfully, invents new category-defining products, generates distinctive brand identities, and evolves products through structured milestones.
 
 ## Capabilities
 
@@ -30,7 +30,7 @@ Build Linear but for legal case management
 Invent a tool for async team rituals
 ```
 
-Atlas9 will generate:
+Oaxe will generate:
 
 1. Product specification
 2. Architecture diagram (textual)
@@ -48,7 +48,7 @@ Atlas9 will generate:
 ## Repository Structure
 
 ```
-atlas9/
+oaxe/
 ├── README.md                    # This file
 ├── tasks.md                     # Milestone-driven execution plan
 ├── brand/

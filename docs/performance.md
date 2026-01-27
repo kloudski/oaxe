@@ -2,7 +2,7 @@
 
 ## Overview
 
-Atlas9 targets world-class performance to support 1M+ MAU from day one. Every architectural decision optimizes for speed, efficiency, and scalability.
+Oaxe targets world-class performance to support 1M+ MAU from day one. Every architectural decision optimizes for speed, efficiency, and scalability.
 
 ## Performance Targets
 

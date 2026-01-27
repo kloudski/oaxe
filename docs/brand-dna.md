@@ -38,7 +38,7 @@ The archetype defines the fundamental personality and role the brand plays.
 | The Jester | Joy, irreverence | Old Spice, Dollar Shave Club |
 | The Caregiver | Service, protection | Johnson & Johnson, UNICEF |
 
-**For Atlas9 Products:**
+**For Oaxe Products:**
 - Primary archetype: **The Sage** (truth, precision, expertise)
 - Secondary archetype: **The Creator** (innovation, building, possibility)
 
@@ -54,7 +54,7 @@ because [reason to believe].
 
 **Example:**
 ```
-For ambitious builders, Atlas9 is the product engine that
+For ambitious builders, Oaxe is the product engine that
 transforms vision into production-grade software because it
 encodes the expertise of world-class teams.
 ```
@@ -252,7 +252,7 @@ What the brand never does.
 
 ## Generating Brand DNA
 
-When Atlas9 generates a new product, it:
+When Oaxe generates a new product, it:
 
 1. **Analyzes the directive** — What category? What audience?
 2. **Selects archetypes** — Based on product positioning

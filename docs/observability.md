@@ -2,7 +2,7 @@
 
 ## Overview
 
-Atlas9 implements comprehensive observability through logs, traces, and metrics. Every operation is instrumented for debugging, performance analysis, and cost tracking.
+Oaxe implements comprehensive observability through logs, traces, and metrics. Every operation is instrumented for debugging, performance analysis, and cost tracking.
 
 ## Three Pillars
 
@@ -123,7 +123,7 @@ Total Duration: 1050ms
 // lib/tracing.ts
 import { trace, SpanStatusCode } from '@opentelemetry/api'
 
-const tracer = trace.getTracer('atlas9')
+const tracer = trace.getTracer('oaxe')
 
 export async function withSpan<T>(
   name: string,
@@ -312,7 +312,7 @@ export async function GET() {
 ```yaml
 # alerts.yml
 groups:
-  - name: atlas9
+  - name: oaxe
     rules:
       - alert: HighErrorRate
         expr: |
@@ -457,7 +457,7 @@ import { datadogLogs } from '@datadog/browser-logs'
 datadogLogs.init({
   clientToken: process.env.NEXT_PUBLIC_DD_CLIENT_TOKEN,
   site: 'datadoghq.com',
-  service: 'atlas9',
+  service: 'oaxe',
   env: process.env.VERCEL_ENV,
 })
 ```

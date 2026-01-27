@@ -2,7 +2,7 @@
 
 ## Overview
 
-Atlas9 is designed for edge-first deployment on Vercel with PostgreSQL, Redis, and optional vector storage.
+Oaxe is designed for edge-first deployment on Vercel with PostgreSQL, Redis, and optional vector storage.
 
 ## Architecture
 
@@ -219,7 +219,7 @@ LLM: Same keys, lower rate limits
 ### Production
 
 ```
-URL: atlas9.dev
+URL: oaxe.xyz
 Database: Neon production
 Redis: Upstash production
 LLM: Production keys, full rate limits

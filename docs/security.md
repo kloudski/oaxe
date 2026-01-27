@@ -2,7 +2,7 @@
 
 ## Overview
 
-Atlas9 implements defense-in-depth security across all layers. Security is not optional—it's infrastructure.
+Oaxe implements defense-in-depth security across all layers. Security is not optional—it's infrastructure.
 
 ## Security Principles
 
@@ -249,7 +249,7 @@ cookies().set('session', token, {
 // For non-cookie auth, validate Origin header
 export async function POST(request: Request) {
   const origin = request.headers.get('Origin')
-  const allowedOrigins = ['https://atlas9.dev']
+  const allowedOrigins = ['https://oaxe.xyz']
 
   if (!allowedOrigins.includes(origin ?? '')) {
     return Response.json({ error: 'Invalid origin' }, { status: 403 })

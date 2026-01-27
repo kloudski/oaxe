@@ -2,7 +2,7 @@
 
 ## Overview
 
-Atlas9 follows an edge-first, streaming-first architecture optimized for global performance and AI-native workflows.
+Oaxe follows an edge-first, streaming-first architecture optimized for global performance and AI-native workflows.
 
 ## System Diagram
 

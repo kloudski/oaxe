@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oaxe.xyz/schemas/brand-dna.schema.json",
+  "title": "Brand DNA",
+  "description": "Brand identity specification for Oaxe generated products",
+  "type": "object",
+  "required": [
+    "version",
+    "archetype",
+    "brandPromise",
+    "emotionalSignature",
+    "visualSignature",
+    "verbalTone",
+    "iconography",
+    "guardrails"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "generatedAt": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "productName": {
+      "type": ["string", "null"]
+    },
+    "productTagline": {
+      "type": ["string", "null"]
+    },
+    "archetype": {
+      "type": "object",
+      "required": ["archetypeOptions"],
+      "properties": {
+        "primary": {
+          "type": ["string", "null"]
+        },
+        "secondary": {
+          "type": ["string", "null"]
+        },
+        "description": {
+          "type": ["string", "null"]
+        },
+        "archetypeOptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "brandPromise": {
+      "type": "object",
+      "properties": {
+        "statement": {
+          "type": ["string", "null"]
+        },
+        "proofPoints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "emotionalSignature": {
+      "type": "object",
+      "properties": {
+        "primary": {
+          "type": ["string", "null"]
+        },
+        "secondary": {
+          "type": ["string", "null"]
+        },
+        "avoided": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "emotionSpectrum": {
+          "type": "object",
+          "properties": {
+            "power": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "trust": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "precision": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "warmth": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "innovation": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "stability": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            }
+          }
+        }
+      }
+    },
+    "visualSignature": {
+      "type": "object",
+      "properties": {
+        "typography": {
+          "type": "object"
+        },
+        "color": {
+          "type": "object"
+        },
+        "layout": {
+          "type": "object"
+        },
+        "texture": {
+          "type": "object"
+        },
+        "motion": {
+          "type": "object"
+        },
+        "depth": {
+          "type": "object"
+        }
+      }
+    },
+    "verbalTone": {
+      "type": "object",
+      "properties": {
+        "personality": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "avoided": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "microcopy": {
+          "type": "object"
+        },
+        "errorMessages": {
+          "type": "object"
+        },
+        "emptyStates": {
+          "type": "object"
+        },
+        "systemMessages": {
+          "type": "object"
+        }
+      }
+    },
+    "iconography": {
+      "type": "object",
+      "properties": {
+        "style": {
+          "type": ["string", "null"]
+        },
+        "strokeWidth": {
+          "type": ["string", "null"]
+        },
+        "cornerStyle": {
+          "type": ["string", "null"]
+        },
+        "library": {
+          "type": ["string", "null"]
+        },
+        "customSymbols": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "usageRules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "guardrails": {
+      "type": "object",
+      "properties": {
+        "visualDonts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "verbalDonts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "competitorReferences": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "trademarkNotes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "accessibilityRequirements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "createdBy": {
+          "type": ["string", "null"]
+        },
+        "approvedBy": {
+          "type": ["string", "null"]
+        },
+        "lastUpdated": {
+          "type": ["string", "null"]
+        },
+        "changelog": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}

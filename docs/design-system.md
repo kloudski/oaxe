@@ -2,7 +2,7 @@
 
 ## Philosophy
 
-The Atlas9 design system embodies a **High-End Research Lab** aesthetic. Every element communicates precision, scientific rigor, and elite craftsmanship. The system is designed to make generated products look better than Vercel, Linear, Stripe, Notion, and Figma.
+The Oaxe design system embodies a **High-End Research Lab** aesthetic. Every element communicates precision, scientific rigor, and elite craftsmanship. The system is designed to make generated products look better than Vercel, Linear, Stripe, Notion, and Figma.
 
 Design is infrastructure, not decoration.
 

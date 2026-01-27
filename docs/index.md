@@ -1,8 +1,8 @@
-# Atlas9 Documentation
+# Oaxe Documentation
 
 ## Overview
 
-Atlas9 is an autonomous product replication, invention, branding, and evolution engine. This documentation covers all aspects of the system.
+Oaxe is an autonomous product replication, invention, branding, and evolution engine. This documentation covers all aspects of the system.
 
 ## Quick Navigation
 

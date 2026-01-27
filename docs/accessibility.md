@@ -2,7 +2,7 @@
 
 ## Overview
 
-Atlas9 adheres to WCAG 2.2 Level AA standards. Accessibility is not an afterthought—it's a core design requirement that ensures every user can access and use generated products effectively.
+Oaxe adheres to WCAG 2.2 Level AA standards. Accessibility is not an afterthought—it's a core design requirement that ensures every user can access and use generated products effectively.
 
 ## Standards
 

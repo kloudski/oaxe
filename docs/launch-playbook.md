@@ -120,11 +120,11 @@ So I built [product].
 
 **Example:**
 ```
-Atlas9: Product replication engine for builders.
+Oaxe: Product replication engine for builders.
 
 Point it at any product. Get production-grade code, design, and brand.
 
-atlas9.dev
+oaxe.xyz
 
 [Hero screenshot]
 ```
@@ -173,7 +173,7 @@ atlas9.dev
 ```
 Turn any product into code.
 
-Point Atlas9 at Facebook, Stripe, or your own idea.
+Point Oaxe at Facebook, Stripe, or your own idea.
 Get production-grade architecture, design, and brand.
 
 [Start Building]

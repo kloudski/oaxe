@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes how data moves through Atlas9 during product generation, from user directive to complete repository output.
+This document describes how data moves through Oaxe during product generation, from user directive to complete repository output.
 
 ## Primary Data Flow
 
