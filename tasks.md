@@ -37,46 +37,136 @@ Additional context.
 
 ---
 
-## [M0] Project Initialization
+## [M0A] Engine Bootstrap
 
-**Status:** Not Started
+**Status:** Complete
 **Owner:** @architect
 **Dependencies:** None
 **Priority:** P0
 
 ### Objective
-Initialize the product repository with foundational infrastructure.
+Bootstrap the core generation engine with file-based persistence.
 
 ### Acceptance Criteria
-- [ ] Next.js 14+ App Router configured
-- [ ] TypeScript strict mode enabled
+- [x] Next.js 14+ App Router configured
+- [x] TypeScript strict mode enabled
+- [x] Tailwind CSS configured
+- [x] Directive → JSON generation via LLM
+- [x] File-based run persistence (data/runs/)
+- [x] Zod validation for all schemas
+- [x] Live logs with polling UI
+- [x] API routes: POST /api/runs, GET /api/runs, GET /api/runs/[id]
+
+### Performance Implications
+- File I/O acceptable for single-user dev mode
+- Polling interval: 1s
+
+### Security Implications
+- No auth required (local dev only)
+- No secrets in generated output
+
+### Tasks
+- [x] Initialize Next.js project — @architect
+- [x] Configure TypeScript strict mode — @architect
+- [x] Set up Tailwind — @architect
+- [x] Implement Zod schemas — @architect
+- [x] Implement file-based runStore — @architect
+- [x] Implement LLM planner — @architect
+- [x] Build polling UI — @architect
+
+### Notes
+Engine bootstrap complete. Platform infrastructure deferred to M0B.
+
+---
+
+## [M0B] Platform Initialization
+
+**Status:** Not Started
+**Owner:** @architect
+**Dependencies:** [M0A]
+**Priority:** P1
+
+### Objective
+Initialize production-grade platform infrastructure.
+
+### Acceptance Criteria
 - [ ] ESLint + Prettier configured
 - [ ] Tailwind CSS with OKLCH tokens
-- [ ] Database schema initialized
+- [ ] Database schema initialized (Postgres + Drizzle)
 - [ ] Auth provider connected
 - [ ] CI/CD pipeline operational
 - [ ] Observability stack connected
+- [ ] CSP headers configured
+- [ ] Environment variables secured
+- [ ] Auth flow hardened
 
 ### Performance Implications
 - Foundation for p95 < 1.2s latency
 - Edge runtime compatibility verified
+- Database connection pooling required
 
 ### Security Implications
 - CSP headers configured
 - Environment variables secured
 - Auth flow hardened
+- OWASP top 10 mitigated
 
 ### Tasks
-- [ ] Initialize Next.js project — @architect — Est: 1h
-- [ ] Configure TypeScript — @architect — Est: 0.5h
-- [ ] Set up Tailwind + design tokens — @designer — Est: 2h
+- [ ] Configure ESLint + Prettier — @architect — Est: 1h
+- [ ] Migrate Tailwind to OKLCH tokens — @designer — Est: 2h
 - [ ] Configure database (Postgres + Drizzle) — @backend — Est: 2h
 - [ ] Set up authentication — @backend — Est: 3h
 - [ ] Configure CI/CD — @devops — Est: 2h
 - [ ] Set up observability — @devops — Est: 2h
+- [ ] Implement CSP headers — @security — Est: 1h
 
 ### Notes
 Use Vercel for deployment. Prefer edge runtime where possible.
+
+---
+
+## [M7-lite] Minimal Code Stub Generation
+
+**Status:** Complete
+**Owner:** @engineer
+**Dependencies:** [M0A]
+**Priority:** P0
+
+### Objective
+Generate minimal runnable Next.js app scaffold from planner output.
+
+### Acceptance Criteria
+- [x] App scaffold generated (package.json, tsconfig, tailwind, etc.)
+- [x] Page stubs generated from pages[]
+- [x] API route stubs generated from apis[] with Zod validation
+- [x] Entity → TypeScript types generated from entities[]
+- [x] Slug sanitization implemented
+- [x] Overwrite protection (force flag required)
+- [x] Integration with run lifecycle (generatedApp in run JSON)
+- [x] UI tab: "Generated App" with file tree + instructions
+
+### Performance Implications
+- Generation is synchronous after spec completion
+- File tree built in-memory before write
+
+### Security Implications
+- No secrets in generated code
+- Slug sanitization prevents path traversal
+- Input validation stubs in all API routes
+
+### Tasks
+- [x] Create generator types — @engineer
+- [x] Build scaffold generator — @engineer
+- [x] Build page generator — @engineer
+- [x] Build API route generator — @engineer
+- [x] Build entity/schema generator — @engineer
+- [x] Integrate with planner lifecycle — @engineer
+- [x] Build FileTree component — @engineer
+- [x] Build GeneratedAppView component — @engineer
+- [x] Update RunViewer with Generated App tab — @engineer
+
+### Notes
+Generated apps output to /generated/<slug>/. Run `pnpm install && pnpm dev` to start.
 
 ---
 
@@ -84,7 +174,7 @@ Use Vercel for deployment. Prefer edge runtime where possible.
 
 **Status:** Not Started
 **Owner:** @product
-**Dependencies:** [M0]
+**Dependencies:** [M0A]
 **Priority:** P0
 
 ### Objective
