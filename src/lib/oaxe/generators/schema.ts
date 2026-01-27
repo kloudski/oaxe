@@ -20,10 +20,13 @@ function mapFieldType(type: string): string {
     json: 'Record<string, unknown>',
     object: 'Record<string, unknown>',
     array: 'unknown[]',
+    file: 'string', // File URLs/paths are stored as strings
+    email: 'string',
+    url: 'string',
   };
 
   const normalized = type.toLowerCase().trim();
-  return typeMap[normalized] || 'unknown';
+  return typeMap[normalized] || 'string';
 }
 
 function mapFieldToZod(type: string): string {
@@ -45,10 +48,13 @@ function mapFieldToZod(type: string): string {
     json: 'z.record(z.unknown())',
     object: 'z.record(z.unknown())',
     array: 'z.array(z.unknown())',
+    file: 'z.string()', // File URLs/paths are strings
+    email: 'z.string().email()',
+    url: 'z.string().url()',
   };
 
   const normalized = type.toLowerCase().trim();
-  return zodMap[normalized] || 'z.unknown()';
+  return zodMap[normalized] || 'z.string()';
 }
 
 function pascalCase(str: string): string {
@@ -81,11 +87,16 @@ export function generateSchema(output: OaxeOutput): GeneratedFile[] {
 
   for (const entity of output.entities) {
     const entityName = pascalCase(entity.name);
+    // Filter out reserved fields that we add manually
+    const reservedFields = ['id', 'createdat', 'updatedat', 'created_at', 'updated_at'];
+    const userFields = entity.fields.filter(f =>
+      !reservedFields.includes(f.name.toLowerCase().replace(/[-_]/g, ''))
+    );
 
     // TypeScript interface
     typesContent += `export interface ${entityName} {\n`;
     typesContent += `  id: string;\n`;
-    for (const field of entity.fields) {
+    for (const field of userFields) {
       const fieldName = camelCase(field.name);
       const tsType = mapFieldType(field.type);
       typesContent += `  ${fieldName}: ${tsType};\n`;
@@ -97,7 +108,7 @@ export function generateSchema(output: OaxeOutput): GeneratedFile[] {
     // Zod schema
     schemasContent += `export const ${entityName}Schema = z.object({\n`;
     schemasContent += `  id: z.string(),\n`;
-    for (const field of entity.fields) {
+    for (const field of userFields) {
       const fieldName = camelCase(field.name);
       const zodType = mapFieldToZod(field.type);
       schemasContent += `  ${fieldName}: ${zodType},\n`;
@@ -132,9 +143,10 @@ export function generateSchema(output: OaxeOutput): GeneratedFile[] {
     path: 'src/lib/db/index.ts',
     content: `export * from './types';
 export * from './schema';
+export * from './seed';
 
 // Database connection will be added in M0B
-// For now, this module provides type-only definitions
+// For now, this module provides type-only definitions with seed data
 `,
   });
 

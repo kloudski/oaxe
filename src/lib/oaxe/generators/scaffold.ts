@@ -1,8 +1,19 @@
 import type { OaxeOutput } from '../types';
 import type { GeneratedFile } from './types';
 
+function getFirstPageRoute(output: OaxeOutput): string {
+  // Find first non-root page, or default to /dashboard
+  const firstPage = output.pages.find(p => p.route !== '/' && p.route !== '');
+  if (firstPage) {
+    const route = firstPage.route.replace(/^\/+/, '');
+    return `/${route}`;
+  }
+  return '/dashboard';
+}
+
 export function generateScaffold(output: OaxeOutput): GeneratedFile[] {
   const files: GeneratedFile[] = [];
+  const firstPageRoute = getFirstPageRoute(output);
 
   // package.json
   files.push({
@@ -201,6 +212,36 @@ body {
   background: var(--background);
   font-family: Inter, system-ui, sans-serif;
 }
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #18181b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid #0ea5e9;
+  outline-offset: 2px;
+}
+
+/* Form input base styles */
+input, textarea, select {
+  font-family: inherit;
+}
 `,
   });
 
@@ -223,17 +264,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
-        <nav className="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-sm sticky top-0 z-50">
-          <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-            <a href="/" className="text-xl font-bold text-white">
-              ${output.appName}
-            </a>
-            <div className="flex gap-6 text-sm text-zinc-400">
-              <a href="/" className="hover:text-white transition-colors">Home</a>
-            </div>
-          </div>
-        </nav>
-        <main>{children}</main>
+        {children}
       </body>
     </html>
   );
@@ -241,41 +272,118 @@ export default function RootLayout({
 `,
   });
 
-  // src/app/page.tsx (landing page)
+  // src/app/(app)/layout.tsx - App layout with shell
+  files.push({
+    path: 'src/app/(app)/layout.tsx',
+    content: `import { AppShell } from '@/components/AppShell';
+
+export default function AppLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <AppShell>{children}</AppShell>;
+}
+`,
+  });
+
+  // src/app/page.tsx (root redirect)
   files.push({
     path: 'src/app/page.tsx',
-    content: `export default function Home() {
+    content: `import { redirect } from 'next/navigation';
+
+export default function Home() {
+  redirect('${firstPageRoute}');
+}
+`,
+  });
+
+  // src/app/(app)/page.tsx (dashboard)
+  const entityCount = output.entities.length;
+  const pageCount = output.pages.length;
+  files.push({
+    path: 'src/app/(app)/page.tsx',
+    content: `import { Card, CardHeader } from '@/components';
+
+export default function Dashboard() {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-16">
-      <div className="text-center space-y-6">
-        <h1 className="text-5xl font-bold text-white">
-          ${output.appName}
-        </h1>
-        <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
-          ${output.elevatorPitch.replace(/'/g, "\\'")}
-        </p>
-        <div className="pt-8">
-          <a
-            href="#features"
-            className="inline-flex items-center px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition-colors"
-          >
-            Get Started
-          </a>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-white">${output.appName}</h1>
+        <p className="text-zinc-400 mt-1">${output.elevatorPitch.replace(/'/g, "\\'")}</p>
       </div>
 
-      <section id="features" className="mt-24">
-        <h2 className="text-3xl font-bold text-white text-center mb-12">
-          Core Features
-        </h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          ${output.productSpec.coreFeatures.map((feature, i) => `
-          <div className="p-6 bg-zinc-900 rounded-xl border border-zinc-800">
-            <h3 className="text-lg font-semibold text-white mb-2">Feature ${i + 1}</h3>
-            <p className="text-zinc-400 text-sm">${feature.replace(/'/g, "\\'")}</p>
+      {/* Stats overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <div className="text-center">
+            <p className="text-3xl font-bold text-white">${entityCount}</p>
+            <p className="text-sm text-zinc-400 mt-1">Entities</p>
+          </div>
+        </Card>
+        <Card>
+          <div className="text-center">
+            <p className="text-3xl font-bold text-white">${pageCount}</p>
+            <p className="text-sm text-zinc-400 mt-1">Pages</p>
+          </div>
+        </Card>
+        <Card>
+          <div className="text-center">
+            <p className="text-3xl font-bold text-white">${output.apis.length}</p>
+            <p className="text-sm text-zinc-400 mt-1">API Routes</p>
+          </div>
+        </Card>
+      </div>
+
+      {/* Quick actions */}
+      <Card padding="lg">
+        <CardHeader
+          title="Getting Started"
+          description="Quick actions to help you get started with ${output.appName}"
+        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          ${output.pages.slice(0, 4).map(page => {
+            const route = page.route.replace(/^\/+/, '');
+            const label = route.split('/')[0] || 'Home';
+            const titleCase = label.charAt(0).toUpperCase() + label.slice(1);
+            return `
+          <a
+            href="/${route}"
+            className="flex items-center gap-3 p-4 bg-zinc-800/50 hover:bg-zinc-800 rounded-lg transition-colors group"
+          >
+            <div className="w-10 h-10 bg-primary-500/10 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-medium text-white group-hover:text-primary-400 transition-colors">${titleCase}</p>
+              <p className="text-sm text-zinc-500">${page.purpose.replace(/'/g, "\\'").substring(0, 50)}...</p>
+            </div>
+          </a>`;
+          }).join('')}
+        </div>
+      </Card>
+
+      {/* Features */}
+      <Card padding="lg">
+        <CardHeader
+          title="Core Features"
+          description="What ${output.appName} offers"
+        />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          ${output.productSpec.coreFeatures.slice(0, 6).map((feature, i) => `
+          <div className="p-4 bg-zinc-800/30 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-6 h-6 bg-primary-500/20 rounded flex items-center justify-center">
+                <span className="text-xs font-medium text-primary-400">${i + 1}</span>
+              </div>
+              <span className="text-sm font-medium text-white">Feature ${i + 1}</span>
+            </div>
+            <p className="text-sm text-zinc-400">${feature.replace(/'/g, "\\'")}</p>
           </div>`).join('')}
         </div>
-      </section>
+      </Card>
     </div>
   );
 }

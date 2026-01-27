@@ -6,6 +6,8 @@ import { generateScaffold } from './scaffold';
 import { generatePages } from './pages';
 import { generateApis } from './apis';
 import { generateSchema } from './schema';
+import { generateSeed } from './seed';
+import { generateComponents } from './components';
 
 export * from './types';
 
@@ -90,10 +92,79 @@ export async function generateApp(
   // Collect all generated files
   const files: GeneratedFile[] = [
     ...generateScaffold(output),
+    ...generateComponents(output),
     ...generatePages(output),
     ...generateApis(output),
     ...generateSchema(output),
+    ...generateSeed(output),
   ];
+
+  // VALIDATION: Ensure all sidebar routes have corresponding page.tsx files
+  // This prevents 404 errors when clicking sidebar links
+  const generatedPagePaths = new Set(
+    files
+      .filter(f => f.path.includes('src/app/(app)/') && f.path.endsWith('/page.tsx'))
+      .map(f => {
+        // Extract route from path: src/app/(app)/job/page.tsx -> job
+        const match = f.path.match(/src\/app\/\(app\)\/([^/]+)\/page\.tsx$/);
+        return match ? match[1] : null;
+      })
+      .filter(Boolean)
+  );
+
+  // Get all sidebar routes (from entities + pages)
+  const sidebarRoutes = new Set<string>();
+
+  // All entities need index pages
+  for (const entity of output.entities) {
+    sidebarRoutes.add(entity.name.toLowerCase());
+  }
+
+  // All page base routes need pages
+  for (const page of output.pages) {
+    if (page.route === '/') continue;
+    const route = page.route.replace(/^\/+/, '');
+    const baseRoute = route.split('/')[0];
+    if (baseRoute && !baseRoute.startsWith('[')) {
+      sidebarRoutes.add(baseRoute);
+    }
+  }
+
+  // Generate placeholder pages for any missing routes
+  for (const route of sidebarRoutes) {
+    if (!generatedPagePaths.has(route)) {
+      const titleCase = route.charAt(0).toUpperCase() + route.slice(1);
+      const placeholderContent = `import { Card, CardHeader } from '@/components';
+
+export default function ${titleCase}Page() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-white">${titleCase}</h1>
+        <p className="text-zinc-400 mt-1">Manage ${titleCase.toLowerCase()} data</p>
+      </div>
+
+      <Card>
+        <CardHeader
+          title="${titleCase}"
+          description="This page is ready for implementation"
+        />
+        <div className="p-4 bg-zinc-800/50 rounded-lg">
+          <p className="text-sm text-zinc-400">
+            Content for ${titleCase.toLowerCase()} will appear here.
+          </p>
+        </div>
+      </Card>
+    </div>
+  );
+}
+`;
+      files.push({
+        path: `src/app/(app)/${route}/page.tsx`,
+        content: placeholderContent,
+      });
+    }
+  }
 
   // Build file tree
   const fileTree = buildFileTree(files);

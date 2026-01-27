@@ -170,6 +170,60 @@ Generated apps output to /generated/<slug>/. Run `pnpm install && pnpm dev` to s
 
 ---
 
+## [M7-plus] Real Product Generator
+
+**Status:** Complete
+**Owner:** @engineer
+**Dependencies:** [M7-lite]
+**Priority:** P0
+
+### Objective
+Upgrade generated apps from skeletons into real-feeling products with navigation, layouts, CRUD UI, and coherent UX.
+
+### Acceptance Criteria
+- [x] App shell with sidebar + header generated
+- [x] Navigation auto-built from pages[]
+- [x] Root redirect to first page or /dashboard
+- [x] Entities rendered as tables with seed data
+- [x] Create forms generated from entity fields
+- [x] API stubs return realistic shapes
+- [x] Zod validation in forms and APIs
+- [x] All generated apps boot and feel usable
+- [x] No infra dependencies added
+
+### Performance Implications
+- No blocking operations in UI
+- No unnecessary re-renders
+- Page load < 1s local
+
+### Security Implications
+- Input validation on all forms and APIs
+- No secrets or tokens in generated code
+
+### Tasks
+- [x] Build AppShell generator — @engineer
+- [x] Build sidebar + nav generator — @engineer
+- [x] Build entity table generator — @engineer
+- [x] Build form generator — @engineer
+- [x] Upgrade API stub generator — @engineer
+- [x] Add seed data generator — @engineer
+- [x] Add base UI styles — @engineer
+
+### Notes
+No database. No auth. No infra.
+All UX must be derived strictly from planner output.
+
+**Patch (2026-01-27): Entity Index Page Bug Fix**
+- Fixed 404s for entity routes (/job, /applicant) when planner only specified /:id routes
+- pages.ts: Now ensures every entity has an index page even if not explicitly in pages[]
+- components.ts: Sidebar now correctly derives nav items from entities[] + pages[]
+- index.ts: Added validation step to catch any missing sidebar route pages
+- apis.ts: Fixed path sanitization order (`:id` → `[id]` before char filtering)
+- apis.ts: Fixed hasParams to detect `:id` syntax
+- schema.ts: Added file/email/url type mappings
+
+---
+
 ## [M1] Product Specification
 
 **Status:** Not Started
