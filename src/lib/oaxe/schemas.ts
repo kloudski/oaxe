@@ -337,6 +337,102 @@ export const EvolutionRoadmapSchema = z.object({
   }),
 });
 
+/**
+ * M5B: Layout Grammar Schema
+ * Dynamic composition of layout structure
+ */
+export const EntityViewConfigSchema = z.object({
+  entityName: z.string().describe('Entity this config applies to'),
+  viewType: z.enum(['table', 'cards', 'kanban', 'timeline', 'feed']).describe('How to display entity list'),
+  listPrimaryField: z.string().describe('Primary field to display in list'),
+  listColumns: z.array(z.string()).describe('Columns to show in list view'),
+  createPattern: z.enum(['page', 'modal']).describe('How to create new entities'),
+  detailsPattern: z.enum(['page', 'drawer', 'modal']).describe('How to show entity details'),
+});
+
+export const DashboardBlockSchema = z.object({
+  type: z.enum(['stats', 'chart', 'list', 'actions', 'activity', 'moment']).describe('Block type'),
+  entityName: z.string().optional().describe('Entity this block relates to'),
+  title: z.string().describe('Block title'),
+  span: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).describe('Grid span (1-4 columns)'),
+});
+
+export const LayoutGrammarSchema = z.object({
+  // Navigation structure
+  navPattern: z.enum(['sidebar', 'top', 'hybrid']).describe('Navigation pattern'),
+
+  // Dashboard composition
+  dashboardLayout: z.enum(['grid', 'rail', 'stacked']).describe('Dashboard layout style'),
+  dashboardBlocks: z.array(DashboardBlockSchema).min(4).max(6).describe('Dashboard blocks'),
+
+  // Entity presentation
+  entityViews: z.array(EntityViewConfigSchema).describe('Per-entity view configuration'),
+
+  // Global interaction model
+  hierarchy: z.enum(['flat', 'nested', 'tabbed']).describe('Navigation hierarchy style'),
+  density: z.enum(['compact', 'comfortable', 'spacious']).describe('UI density level'),
+  interactionModel: z.enum(['click', 'hover-reveal', 'inline-edit']).describe('Primary interaction pattern'),
+
+  // Metadata
+  seed: z.number().describe('Deterministic seed for grammar generation'),
+  generatedAt: z.string().describe('ISO timestamp of generation'),
+});
+
+export type LayoutGrammar = z.infer<typeof LayoutGrammarSchema>;
+
+/**
+ * M5C: Visual Emphasis Schema
+ * Amplifies visual hierarchy, emphasis, and component personality
+ */
+export const ComponentPersonalitySchema = z.object({
+  paddingScale: z.number().describe('Padding scale: 1.0 is baseline'),
+  radiusPreference: z.enum(['tighter', 'baseline', 'softer']).describe('Radius preference'),
+  borderVisibility: z.enum(['clear', 'subtle', 'minimal']).describe('Border visibility'),
+  shadowUsage: z.enum(['pronounced', 'standard', 'minimal', 'none']).describe('Shadow usage'),
+  ctaProminence: z.enum(['high', 'medium', 'low']).describe('CTA prominence'),
+  textContrast: z.enum(['high', 'medium', 'low']).describe('Text contrast'),
+});
+
+export const SectionWeightSchema = z.object({
+  level: z.enum(['dominant', 'primary', 'secondary', 'tertiary', 'muted']).describe('Emphasis level'),
+  backgroundShift: z.enum(['none', 'subtle', 'strong']).describe('Background shift'),
+  borderEmphasis: z.enum(['none', 'subtle', 'strong']).describe('Border emphasis'),
+  paddingMultiplier: z.number().describe('Padding multiplier'),
+  headingScale: z.number().describe('Heading scale'),
+});
+
+export const VisualEmphasisSchema = z.object({
+  dashboardFocus: z.enum(['metrics-first', 'narrative', 'workflow-first']).describe('Dashboard focus style'),
+  button: ComponentPersonalitySchema.describe('Button personality'),
+  card: ComponentPersonalitySchema.describe('Card personality'),
+  dataTable: ComponentPersonalitySchema.describe('DataTable personality'),
+  entityForm: ComponentPersonalitySchema.describe('EntityForm personality'),
+  sidebar: ComponentPersonalitySchema.describe('Sidebar personality'),
+  dashboardSections: z.object({
+    primary: SectionWeightSchema.describe('Primary section weight'),
+    secondary: SectionWeightSchema.describe('Secondary section weight'),
+    tertiary: SectionWeightSchema.describe('Tertiary section weight'),
+  }).describe('Dashboard section weights'),
+  categoryHeuristics: z.object({
+    category: z.string().describe('Category name'),
+    density: z.enum(['dense', 'balanced', 'spacious']).describe('Density level'),
+    separators: z.enum(['strong', 'standard', 'soft']).describe('Separator style'),
+    hierarchy: z.enum(['pronounced', 'balanced', 'subtle']).describe('Hierarchy style'),
+    decoration: z.enum(['minimal', 'moderate', 'expressive']).describe('Decoration level'),
+  }).describe('Category-native heuristics'),
+  signatureEnforcement: z.object({
+    shapeApplied: z.boolean().describe('Shape dimension applied'),
+    densityApplied: z.boolean().describe('Density dimension applied'),
+    contrastApplied: z.boolean().describe('Contrast dimension applied'),
+    motionApplied: z.boolean().describe('Motion dimension applied'),
+    layoutApplied: z.boolean().describe('Layout dimension applied'),
+  }).describe('Visual signature enforcement flags'),
+  summary: z.string().describe('Summary string for debugging'),
+  generatedAt: z.string().describe('ISO timestamp'),
+});
+
+export type VisualEmphasis = z.infer<typeof VisualEmphasisSchema>;
+
 export const RunSchema = z.object({
   id: z.string(),
   directive: z.string(),
@@ -353,6 +449,8 @@ export const RunSchema = z.object({
   output: OaxeOutputSchema.optional(),
   generatedApp: GeneratedAppSchema.optional(),
   brandDNA: BrandDNASchema.optional(),  // M4A: Enhanced Brand DNA
+  layoutGrammar: LayoutGrammarSchema.optional(),  // M5B: Layout Grammar
+  visualEmphasis: VisualEmphasisSchema.optional(),  // M5C: Visual Emphasis
   launchAssets: LaunchAssetsSchema.optional(),  // M6: Launch Assets
   evolution: EvolutionRoadmapSchema.optional(),  // M8: Evolution Roadmap
   error: z.string().optional(),

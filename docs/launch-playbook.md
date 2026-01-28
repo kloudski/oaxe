@@ -1,13 +1,13 @@
-# SalesMind Launch Playbook
+# SocialSphere Launch Playbook
 
-Generated: 2026-01-28T10:57:08.808Z
-Brand: technology / minimal / Magician
+Generated: 2026-01-28T12:12:14.440Z
+Brand: social / friendly / Everyman
 
 ---
 
 ## Pinned Tweet
 
-> SalesMind: Incidents and deploys in one view—no more missed deadlines or lost context.
+> SocialSphere: Profiles and posts in one view—no more missed deadlines or lost context.
 
 ---
 
@@ -17,15 +17,19 @@ Use these for launch day and the following week. Written in first person, from t
 
 ### Tweet 1
 
-> Every time I needed to do this, I wasted hours on setup. Never again.
+> Connection shouldn't require algorithms. Just people and good tools.
 
 ### Tweet 2
 
-> Built SalesMind to do one thing well: thoughtfully designed for technology workflows.
+> Built SocialSphere to do one thing well: thoughtfully designed for social workflows.
 
 ### Tweet 3
 
-> Built to make hard things feel natural.
+> Built for people like us.
+
+### Tweet 4
+
+> SocialSphere is step one. The roadmap gets interesting from here.
 
 ---
 
@@ -34,23 +38,23 @@ Use these for launch day and the following week. Written in first person, from t
 For landing page, Product Hunt, and marketing materials.
 
 ### Headline
-**organize how you work**
+**social tools for everyone**
 
 ### Subheadline
-Incidents, deploys, and logs in one place—no more messy handoffs or tracking chaos.
+Profiles, posts, and messages in one view—no more endless tabs.
 
 ### Key Benefits
-- Incidents in one view
-- Predictive sales analytics
-- Automated lead management
+- Profiles in one view
+- news feed
+- messaging
 
 ---
 
 ## Screenshot Specification
 
 ### Hero Screenshot
-- **Screen:** Main workspace with active project
-- **Rationale:** Shows developer experience
+- **Screen:** Feed or community view with activity
+- **Rationale:** Shows community engagement
 
 
 ### Supporting Screenshots
@@ -58,7 +62,7 @@ Incidents, deploys, and logs in one place—no more messy handoffs or tracking c
 #### Screenshot 2
 - **Screen:** Create new User form
 - **Communicates:** Easy onboarding and data entry
-
+- **Overlay Copy:** "Add your first User"
 
 #### Screenshot 3
 - **Screen:** User detail view with full information
@@ -66,7 +70,7 @@ Incidents, deploys, and logs in one place—no more messy handoffs or tracking c
 
 
 #### Screenshot 4
-- **Screen:** Lead list or settings view
+- **Screen:** Post list or settings view
 - **Communicates:** Configurability and depth
 
 
@@ -75,36 +79,37 @@ Incidents, deploys, and logs in one place—no more messy handoffs or tracking c
 ## Product Hunt
 
 ### Tagline (60 chars max)
-> Thoughtfully designed for technology workflows
+> Thoughtfully designed for social workflows
 
-Character count: 46/60
+Character count: 42/60
 
 ---
 
 ## Brand Alignment Notes
 
-- **Category:** technology
-- **Mood:** minimal
-- **Archetype:** Magician
-- **Voice Tone:** Professional, Innovative, Supportive
-- **Target Audience:** Sales Managers
+- **Category:** social
+- **Mood:** friendly
+- **Archetype:** Everyman
+- **Voice Tone:** Friendly, Inclusive, Empowering
+- **Target Audience:** teenagers
 
 ### Voice Keywords
-- Efficiency
-- Intelligence
+- Connectivity
+- Community
+- Expression
 - Empowerment
 
 ### Do Say
-- "Simple"
-- "Essential"
-- "Focus"
-- "Just what you need"
+- "Hey there"
+- "We got you"
+- "No worries"
+- "Happy to help"
 
 ### Don't Say
-- "Feature-packed"
-- "All-in-one"
-- "Everything you need"
-- "Loaded with"
+- "Dear Sir/Madam"
+- "Per our policy"
+- "Unfortunately"
+- "Regrettably"
 
 ---
 

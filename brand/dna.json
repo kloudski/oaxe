@@ -1,89 +1,91 @@
 {
-  "name": "SalesMind",
-  "tagline": "SalesMind is an AI-driven salesforce platform that automates workflows with intelligent agents",
-  "category": "technology",
-  "mood": "minimal",
-  "archetype": "Magician",
+  "name": "SocialSphere",
+  "tagline": "Connect and share with people in your life like never before",
+  "category": "social",
+  "mood": "friendly",
+  "archetype": "Everyman",
   "positioning": {
-    "statement": "The future of CRM, powered by AI",
-    "targetAudience": "Sales Managers",
-    "differentiator": "Thoughtfully designed for technology workflows"
+    "statement": "The go-to platform for social connection and community building.",
+    "targetAudience": "teenagers",
+    "differentiator": "Thoughtfully designed for social workflows"
   },
   "voice": {
-    "tone": "Professional, Innovative, Supportive",
-    "style": "focused and efficient",
+    "tone": "Friendly, Inclusive, Empowering",
+    "style": "warm and conversational",
     "keywords": [
-      "Efficiency",
-      "Intelligence",
+      "Connectivity",
+      "Community",
+      "Expression",
       "Empowerment"
     ]
   },
   "visual": {
-    "primaryColor": "oklch(0.55 0.15 235)",
+    "primaryColor": "oklch(0.55 0.17 265)",
     "colorPalette": [
-      "Tech Purple",
-      "Cyber Blue",
-      "Neon Accent"
+      "Friendly Purple",
+      "Vibrant Blue",
+      "Warm Pink"
     ],
-    "aesthetic": "sleek and modern",
-    "iconStyle": "geometric, sharp"
+    "aesthetic": "vibrant and approachable",
+    "iconStyle": "filled, rounded"
   },
   "productBrandMoments": [
     {
-      "moment": "First Deploy",
-      "description": "Successfully deploying first project",
-      "emotion": "Excitement and accomplishment"
+      "moment": "First Connection",
+      "description": "Making initial connection",
+      "emotion": "Belonging and curiosity"
     },
     {
-      "moment": "Problem Solved",
-      "description": "Overcoming a technical challenge",
-      "emotion": "Satisfaction and relief"
+      "moment": "Viral Moment",
+      "description": "Content resonating widely",
+      "emotion": "Validation and excitement"
     },
     {
-      "moment": "Integration Success",
-      "description": "Connecting systems seamlessly",
-      "emotion": "Efficiency and power"
+      "moment": "Community Welcome",
+      "description": "Being embraced by a group",
+      "emotion": "Warmth and acceptance"
     }
   ],
   "values": [
-    "Efficiency",
-    "Intelligence",
+    "Connectivity",
+    "Community",
+    "Expression",
     "Empowerment"
   ],
   "guardrails": {
     "doSay": [
-      "Simple",
-      "Essential",
-      "Focus",
-      "Just what you need"
+      "Hey there",
+      "We got you",
+      "No worries",
+      "Happy to help"
     ],
     "dontSay": [
-      "Feature-packed",
-      "All-in-one",
-      "Everything you need",
-      "Loaded with"
+      "Dear Sir/Madam",
+      "Per our policy",
+      "Unfortunately",
+      "Regrettably"
     ],
     "visualDo": [
-      "Embrace whitespace",
-      "Use single accent color",
-      "Hide complexity"
+      "Use warm colors",
+      "Include illustrations",
+      "Smile in photos"
     ],
     "visualDont": [
-      "Add decorative elements",
-      "Use multiple colors",
-      "Show all options at once"
+      "Be overly formal",
+      "Use corporate stock photos",
+      "Be cold or distant"
     ]
   },
   "visualSignature": {
     "shapeLanguage": {
-      "profile": "mixed",
-      "rationale": "A mixed shape language allows the Magician personality to express itself dynamically. Primary actions use rounded forms for approachability, while data displays employ sharper geometry for clarity.",
-      "cornerRadiusGuidance": "Primary interactive elements use larger radii (8-12px). Secondary elements and data displays use smaller radii (2-4px). This contrast creates visual hierarchy.",
-      "iconTreatment": "Navigation and action icons use softer treatments, while status and data icons employ sharper geometry. This distinction helps users quickly parse icon purpose."
+      "profile": "balanced",
+      "rationale": "A balanced shape vocabulary supports the Everyman's authority while maintaining the friendly sensibility. This measured approach ensures the social product feels neither rigid nor casual.",
+      "cornerRadiusGuidance": "Use moderate radii (4-8px) consistently across the interface. Larger containers may use slightly increased radii. Maintain visual cohesion.",
+      "iconTreatment": "Icons should balance geometric precision with subtle rounding at terminals. The Everyman archetype calls for clear, professional iconography that communicates efficiently."
     },
     "densityRhythm": {
       "profile": "balanced",
-      "rationale": "A balanced density serves the technology use case without overwhelming users. This rhythm allows for both efficient work and comfortable browsing, aligned with the minimal character.",
+      "rationale": "A balanced density serves the social use case without overwhelming users. This rhythm allows for both efficient work and comfortable browsing, aligned with the friendly character.",
       "contexts": {
         "tables": "Standard row heights (44-52px) with comfortable padding. Balance scanability with touch targets. Use subtle dividers.",
         "dashboards": "Moderate widget gaps (16-20px). Balance information density with visual clarity. Allow widgets to breathe.",
@@ -92,72 +94,73 @@
       }
     },
     "contrastPhilosophy": {
-      "profile": "low-contrast-calm",
-      "rationale": "The minimal mood is expressed through subtle tonal shifts rather than stark contrasts. This approach reduces visual stress, essential for technology where users may spend extended time.",
-      "textHierarchy": "Primary text uses medium weight rather than bold. Secondary text is only slightly lighter than primary. Headlines differ in size rather than weight.",
-      "surfaceContrast": "Surfaces differ subtly—cards barely lift from backgrounds. Borders are soft or replaced with shadows. The interface feels unified and calm.",
-      "emphasisStrategy": "Emphasis through size and position rather than color intensity. Use brand color sparingly. Animation can provide emphasis without visual weight."
+      "profile": "mixed-functional",
+      "rationale": "Contrast is deployed strategically: high contrast for actions and critical information, low contrast for supporting elements. This serves social users who need both efficiency and clarity.",
+      "textHierarchy": "Headings use bold weight for clear hierarchy. Body text maintains comfortable contrast. Secondary text steps down noticeably but remains readable.",
+      "surfaceContrast": "Primary content areas have clear contrast. Secondary surfaces use subtle differentiation. Interactive elements stand out through targeted contrast.",
+      "emphasisStrategy": "Primary actions use full brand color. Secondary actions use subtle treatments. Status and feedback use appropriate semantic colors at reduced intensity."
     },
     "textureUsage": {
-      "profile": "none",
-      "rationale": "The technology product maintains a clean, texture-free aesthetic. This supports minimal by eliminating visual noise. Depth is created through shadows and layering, not surface treatments.",
+      "profile": "subtle",
+      "rationale": "Minimal texture adds warmth without distraction. Light gradients, subtle patterns, or noise in specific contexts reinforce the friendly mood while keeping the social interface functional.",
       "allowedContexts": [
-        "Subtle shadows for depth",
-        "Solid color fills only",
-        "Clean gradients for illustration backgrounds"
+        "Light noise on hero sections",
+        "Subtle gradients on cards",
+        "Muted patterns in empty states",
+        "Soft shadows with slight blur"
       ],
       "prohibitedContexts": [
-        "Background patterns",
-        "Grainy textures",
-        "Illustrative textures on UI surfaces",
-        "Noise overlays"
+        "Heavy patterns on interactive elements",
+        "Texture on text backgrounds",
+        "Animated textures",
+        "High-contrast patterns"
       ],
-      "performanceGuidance": "No special performance considerations. CSS-based shadows and gradients are GPU-accelerated."
+      "performanceGuidance": "Use CSS gradients and SVG filters when possible. Pre-generate noise textures at appropriate resolution. Avoid texture animations on scroll."
     },
     "motionCharacter": {
-      "profile": "restrained",
-      "timingPhilosophy": "Short durations (100-150ms) with gentle easing. Prefer fade over movement. Group animations complete together without drawing attention.",
-      "purposeOfMotion": "Motion serves feedback and orientation only. It confirms actions, shows loading states, and maintains spatial continuity during navigation.",
-      "entranceExits": "Elements appear with quick fade (100ms). Exits use fade-out. No translation on entrance. Modals appear instantly with background fade.",
-      "microInteractions": "Buttons have subtle hover states (color shift only). Focus rings appear instantly. Loading spinners are simple and unobtrusive."
+      "profile": "confident",
+      "timingPhilosophy": "Moderate durations (150-250ms) with smooth easing. Elements settle with subtle overshoot. Stagger is minimal but perceptible.",
+      "purposeOfMotion": "Motion builds trust through polish. It communicates quality and reliability. Users feel the product is well-crafted and predictable.",
+      "entranceExits": "Elements scale up slightly (0.98 to 1) with fade. Exits reverse the pattern. Modals slide in from below with confident timing.",
+      "microInteractions": "Buttons have smooth hover transitions. Press states are perceptible. Toggles animate smoothly. Loading states feel controlled."
     },
     "layoutPhilosophy": {
-      "profile": "structure-first",
-      "rationale": "The technology domain benefits from clear structural organization. Users navigate by structure, finding content within predictable containers. This supports the minimal sensibility.",
-      "gridUsage": "Rigid grid with consistent column widths. Content adapts to grid, creating predictable patterns. Use 12-column base with clear breakpoints.",
-      "whiteSpaceIntent": "White space is systematic—consistent across similar elements. Padding and margins follow a strict scale. Predictability over personality.",
-      "responsiveStrategy": "Structural landmarks persist across breakpoints. Sidebar collapses predictably. Grid adapts but maintains column relationships."
+      "profile": "content-first",
+      "rationale": "The social product prioritizes content accessibility. Structure serves content, not vice versa. The friendly mood emerges from thoughtful content presentation.",
+      "gridUsage": "Flexible grid that adapts to content needs. Column widths respond to content type. The grid is a guide, not a constraint.",
+      "whiteSpaceIntent": "White space creates content grouping. Margins between content types are generous. Internal spacing is tighter for cohesion.",
+      "responsiveStrategy": "Content determines breakpoints. Key content remains visible at all sizes. Navigation simplifies but content structure persists."
     },
-    "generatedAt": "2026-01-28T10:57:08.765Z"
+    "generatedAt": "2026-01-28T12:12:14.355Z"
   },
   "iconography": {
     "iconStyle": {
-      "profile": "duotone",
-      "rationale": "Duotone icons add warmth and depth to the minimal personality. The two-tone treatment allows the Magician brand to express personality while maintaining clarity. For technology, this approach balances professionalism with approachability.",
+      "profile": "outline",
+      "rationale": "Outline icons support the friendly mood by providing visual clarity without competing for attention. In social, where information density matters, outlined icons serve as efficient wayfinding without visual weight. The Everyman archetype benefits from this restrained approach that prioritizes function over decoration.",
       "strokeWeight": "standard",
-      "strokeWeightRationale": "Standard stroke weights (1.5-2px) provide optimal legibility across device sizes. For technology, this balanced approach ensures icons remain clear at small sizes while not dominating the interface. The minimal mood is maintained through consistent, professional execution.",
-      "cornerTreatment": "Navigation and action icons use rounded corners for approachability. Data and status icons use sharper corners for precision. This distinction should be consistent across icon families."
+      "strokeWeightRationale": "Standard stroke weights (1.5-2px) provide optimal legibility across device sizes. For social, this balanced approach ensures icons remain clear at small sizes while not dominating the interface. The friendly mood is maintained through consistent, professional execution.",
+      "cornerTreatment": "Icon corners should use subtle rounding (1-2px) at stroke joins. Line caps may be round or squared depending on the specific icon. Maintain consistency within icon families."
     },
     "metaphorStrategy": {
-      "profile": "symbolic",
-      "rationale": "Symbolic iconography allows the Magician brand to express meaning beyond the obvious. Abstract representations can convey concepts, emotions, or transformations that literal icons cannot. In technology, this approach differentiates the brand while maintaining learnability.",
-      "categoryGuidance": "Symbolic tech icons work for innovative features and AI concepts where literal representation is impossible. Ground abstractions in familiar shapes.",
+      "profile": "literal",
+      "rationale": "Literal iconography ensures instant recognition in social contexts. The Everyman brand values clarity and precision—a document icon should look like a document, a person icon should clearly represent a person. Abstraction risks confusion in professional workflows.",
+      "categoryGuidance": "Social platform icons should use established conventions. Users, messaging, reactions—platforms benefit from pattern recognition.",
       "examples": {
         "preferred": [
-          "Meaningful abstractions for complex concepts",
-          "Expressive forms for emotional content",
-          "Brand-distinctive representations"
+          "Standard representations for common concepts",
+          "Industry-recognized metaphors",
+          "Consistent object representation"
         ],
         "avoid": [
-          "Abstraction for critical actions",
-          "Symbols without clear meaning",
-          "Culture-specific or regional metaphors"
+          "Overly abstract forms for concrete concepts",
+          "Unusual metaphors that require learning",
+          "Decorative complexity"
         ]
       }
     },
     "semanticRules": {
-      "oneIconOneMeaning": "Each icon in the technology system represents exactly one concept. If \"star\" means \"favorite,\" it cannot also mean \"important\" or \"rating.\" Dual meanings create user confusion and accessibility issues.",
-      "reusePolicy": "Reuse existing icons whenever the concept matches. Before creating a new icon, verify no existing icon serves the purpose. New icons require documentation of meaning and usage context. The Magician brand values consistency over novelty.",
+      "oneIconOneMeaning": "Each icon in the social system represents exactly one concept. If \"star\" means \"favorite,\" it cannot also mean \"important\" or \"rating.\" Dual meanings create user confusion and accessibility issues.",
+      "reusePolicy": "Reuse existing icons whenever the concept matches. Before creating a new icon, verify no existing icon serves the purpose. New icons require documentation of meaning and usage context. The Everyman brand values consistency over novelty.",
       "newIconCriteria": [
         "The concept has no existing representation in the icon set",
         "Existing icons would cause confusion if reused for this purpose",
@@ -175,28 +178,28 @@
     },
     "usageRules": {
       "do": [
-        "Use only essential icons—less is more",
-        "Prefer text labels where possible",
-        "Keep icon designs extremely simple",
-        "Remove any decorative elements"
+        "Soften icons with rounded treatments",
+        "Use icons to create welcoming touchpoints",
+        "Add subtle personality to empty states",
+        "Maintain approachable proportions"
       ],
       "dont": [
-        "Add icons where text alone suffices",
-        "Use complex multi-element icons",
-        "Apply decorative treatments to icons",
-        "Create icon-heavy interfaces",
-        "Use outdated tech metaphors (floppy disk for save)",
-        "Apply skeuomorphic detail unnecessarily",
+        "Use cold, institutional iconography",
+        "Apply harsh, angular icon treatments",
+        "Neglect personality in empty states",
+        "Create intimidating visual density",
+        "Deviate from established social conventions",
+        "Apply unfamiliar metaphors for common actions",
         "Use emoji-style icons in professional interfaces",
         "Mix metaphors within the same icon (e.g., document with legs)"
       ]
     },
     "accessibilityGuidance": {
       "labelingExpectations": "Provide text labels for primary actions. Icon-only treatments are acceptable for universally recognized icons (close, menu, search) with appropriate ARIA labels. Complex or custom icons require visible labels.",
-      "contrastConsiderations": "Icons must meet WCAG 2.1 contrast requirements. For technology, maintain minimum 3:1 contrast ratio against backgrounds for informational icons, 4.5:1 for icons conveying critical information. Disabled states may use reduced contrast but should remain distinguishable.",
+      "contrastConsiderations": "Icons must meet WCAG 2.1 contrast requirements. For social, maintain minimum 3:1 contrast ratio against backgrounds for informational icons, 4.5:1 for icons conveying critical information. Disabled states may use reduced contrast but should remain distinguishable.",
       "nonVisualSignaling": "Icons must never be the only signal for important information. Pair status icons with text, color, or other indicators. Error states require text explanation. Success confirmations need explicit messaging. Users who cannot see icons must receive equivalent information.",
-      "touchTargets": "Minimum touch target: 44x44px regardless of icon visual size. Icon hit areas may extend beyond visible bounds. technology interfaces should consider larger targets (48x48px) for primary actions. Maintain adequate spacing between adjacent icon targets."
+      "touchTargets": "Minimum touch target: 44x44px regardless of icon visual size. Icon hit areas may extend beyond visible bounds. social interfaces should consider larger targets (48x48px) for primary actions. Maintain adequate spacing between adjacent icon targets."
     },
-    "generatedAt": "2026-01-28T10:57:08.771Z"
+    "generatedAt": "2026-01-28T12:12:14.361Z"
   }
 }

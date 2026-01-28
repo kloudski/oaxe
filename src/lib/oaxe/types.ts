@@ -333,6 +333,110 @@ export interface EvolutionRoadmap {
   };
 }
 
+/**
+ * M5B: Layout Grammar System
+ * Dynamic composition of layout structure from directive + Brand DNA + entities
+ */
+export type NavPattern = 'sidebar' | 'top' | 'hybrid';
+export type DashboardLayout = 'grid' | 'rail' | 'stacked';
+export type EntityViewType = 'table' | 'cards' | 'kanban' | 'timeline' | 'feed';
+export type CreatePattern = 'page' | 'modal';
+export type DetailsPattern = 'page' | 'drawer' | 'modal';
+export type DensityLevel = 'compact' | 'comfortable' | 'spacious';
+export type HierarchyStyle = 'flat' | 'nested' | 'tabbed';
+export type InteractionModel = 'click' | 'hover-reveal' | 'inline-edit';
+
+export interface EntityViewConfig {
+  entityName: string;
+  viewType: EntityViewType;
+  listPrimaryField: string;
+  listColumns: string[];
+  createPattern: CreatePattern;
+  detailsPattern: DetailsPattern;
+}
+
+export interface DashboardBlock {
+  type: 'stats' | 'chart' | 'list' | 'actions' | 'activity' | 'moment';
+  entityName?: string;
+  title: string;
+  span: 1 | 2 | 3 | 4;
+}
+
+export interface LayoutGrammar {
+  // Navigation structure
+  navPattern: NavPattern;
+
+  // Dashboard composition
+  dashboardLayout: DashboardLayout;
+  dashboardBlocks: DashboardBlock[];
+
+  // Entity presentation
+  entityViews: EntityViewConfig[];
+
+  // Global interaction model
+  hierarchy: HierarchyStyle;
+  density: DensityLevel;
+  interactionModel: InteractionModel;
+
+  // Metadata
+  seed: number;
+  generatedAt: string;
+}
+
+/**
+ * M5C: Visual Emphasis System
+ * Amplifies visual hierarchy, emphasis, and component personality
+ */
+export type EmphasisLevel = 'dominant' | 'primary' | 'secondary' | 'tertiary' | 'muted';
+export type DashboardFocus = 'metrics-first' | 'narrative' | 'workflow-first';
+
+export interface ComponentPersonality {
+  paddingScale: number;
+  radiusPreference: 'tighter' | 'baseline' | 'softer';
+  borderVisibility: 'clear' | 'subtle' | 'minimal';
+  shadowUsage: 'pronounced' | 'standard' | 'minimal' | 'none';
+  ctaProminence: 'high' | 'medium' | 'low';
+  textContrast: 'high' | 'medium' | 'low';
+}
+
+export interface SectionWeight {
+  level: EmphasisLevel;
+  backgroundShift: 'none' | 'subtle' | 'strong';
+  borderEmphasis: 'none' | 'subtle' | 'strong';
+  paddingMultiplier: number;
+  headingScale: number;
+}
+
+export interface VisualEmphasis {
+  dashboardFocus: DashboardFocus;
+  button: ComponentPersonality;
+  card: ComponentPersonality;
+  dataTable: ComponentPersonality;
+  entityForm: ComponentPersonality;
+  sidebar: ComponentPersonality;
+  dashboardSections: {
+    primary: SectionWeight;
+    secondary: SectionWeight;
+    tertiary: SectionWeight;
+  };
+  categoryHeuristics: {
+    category: string;
+    density: 'dense' | 'balanced' | 'spacious';
+    separators: 'strong' | 'standard' | 'soft';
+    hierarchy: 'pronounced' | 'balanced' | 'subtle';
+    decoration: 'minimal' | 'moderate' | 'expressive';
+  };
+  signatureEnforcement: {
+    shapeApplied: boolean;
+    densityApplied: boolean;
+    contrastApplied: boolean;
+    motionApplied: boolean;
+    layoutApplied: boolean;
+  };
+  summary: string;
+  generatedAt: string;
+}
+
 export interface Run {
   id: string;
   directive: string;
@@ -343,6 +447,8 @@ export interface Run {
   output?: OaxeOutput;
   generatedApp?: GeneratedApp;
   brandDNA?: BrandDNA;  // M4A: Enhanced Brand DNA
+  layoutGrammar?: LayoutGrammar;  // M5B: Layout Grammar
+  visualEmphasis?: VisualEmphasis;  // M5C: Visual Emphasis
   launchAssets?: LaunchAssets;  // M6: Launch Assets
   evolution?: EvolutionRoadmap;  // M8: Evolution Roadmap
   error?: string;

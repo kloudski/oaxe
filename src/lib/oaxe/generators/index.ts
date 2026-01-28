@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import type { OaxeOutput, BrandDNA } from '../types';
+import type { OaxeOutput, BrandDNA, LayoutGrammar, VisualEmphasis } from '../types';
 import type { GenerationResult, FileTreeNode, GeneratedFile, GeneratorOptions } from './types';
 import { generateScaffold } from './scaffold';
 import { generatePages, getEntityBasePath } from './pages';
@@ -30,6 +30,21 @@ export { generateLaunchAssets, generateLaunchPlaybookMarkdown };
 
 // M8: Export evolution roadmap generator
 export { generateEvolutionRoadmap, generateEvolutionMarkdown } from './evolution';
+
+// M5B: Export layout grammar generator
+export { generateLayoutGrammar, generateLayoutGrammarMarkdown, getLayoutGrammarSummary } from './layoutGrammar';
+
+// M5C: Export visual emphasis generator
+export {
+  generateVisualEmphasis,
+  getVisualEmphasisSummary,
+  getButtonEmphasisClasses,
+  getCardEmphasisClasses,
+  getDataTableEmphasisClasses,
+  getSectionEmphasisClasses,
+  getSidebarEmphasisClasses,
+  getFormEmphasisClasses,
+} from './visualEmphasis';
 
 const GENERATED_DIR = path.join(process.cwd(), 'generated');
 
@@ -88,13 +103,17 @@ function buildFileTree(files: GeneratedFile[]): FileTreeNode {
 }
 
 /**
- * M5A: Generate app with Brand DNA expression
+ * M5A/M5B/M5C: Generate app with Brand DNA expression, Layout Grammar, and Visual Emphasis
  * Accepts optional BrandDNA for brand-aware copy, emphasis, and moments
+ * Accepts optional LayoutGrammar for structural layout decisions
+ * Accepts optional VisualEmphasis for visual hierarchy amplification
  */
 export async function generateApp(
   output: OaxeOutput,
   options: GeneratorOptions = {},
-  brandDNA?: BrandDNA
+  brandDNA?: BrandDNA,
+  layoutGrammar?: LayoutGrammar,
+  visualEmphasis?: VisualEmphasis
 ): Promise<GenerationResult> {
   const { dryRun = false, force = false, directive = '' } = options;
   const slug = sanitizeSlug(output.slug);
@@ -117,11 +136,13 @@ export async function generateApp(
   // Collect all generated files
   // Pass directive for brand-driven token generation (M3B)
   // M5A: Pass Brand DNA for UI expression
+  // M5B: Pass Layout Grammar for structural decisions
+  // M5C: Pass Visual Emphasis for hierarchy amplification
   const files: GeneratedFile[] = [
-    ...generateScaffold(output, directive, brandDNA),    // M5A: Dashboard personality
-    ...generateTokens(output, directive),                 // Brand-driven OKLCH tokens
-    ...generateComponents(output),
-    ...generatePages(output, brandDNA),                   // M5A: Brand-aware copy
+    ...generateScaffold(output, directive, brandDNA, layoutGrammar, visualEmphasis),    // M5A: Dashboard personality, M5B: Layout, M5C: Section weights
+    ...generateTokens(output, directive),                                                // Brand-driven OKLCH tokens
+    ...generateComponents(output, layoutGrammar, visualEmphasis),                        // M5B: Nav patterns, M5C: Component personality
+    ...generatePages(output, brandDNA, layoutGrammar, visualEmphasis),                   // M5A: Brand-aware copy, M5B: Entity views, M5C: Section weights
     ...generateApis(output),
     ...generateSchema(output),
     ...generateSeed(output),

@@ -1194,6 +1194,230 @@ Example copy differences for same "project" entity:
 
 ---
 
+## [M5B] Dynamic Layout Grammar Composer
+
+**Status:** Complete
+**Owner:** @engineer
+**Dependencies:** [M4C, M5A]
+**Priority:** P0
+
+### Objective
+Make generated apps visually and structurally distinct by dynamically composing a LayoutGrammar from directive + Brand DNA + Visual Signature + entities/pages, then applying it to scaffold/pages/components.
+
+### Acceptance Criteria
+- [x] LayoutGrammar types in types.ts with NavPattern, DashboardLayout, EntityViewType, CreatePattern, DetailsPattern
+- [x] LayoutGrammarSchema in schemas.ts with Zod validation
+- [x] layoutGrammar.ts generator with FNV-1a seed, weightedPick(), entity view derivation
+- [x] Entity view type detection based on field heuristics (status→kanban, date→timeline, content→feed)
+- [x] View diversity guardrail: if entities >= 3, ensure at least 2 distinct views
+- [x] Dashboard block composition (4-6 blocks) based on hierarchy and entities
+- [x] Grammar validation and repair
+- [x] run.layoutGrammar field in Run interface
+- [x] runStore.setLayoutGrammar() with persistence to docs/layout-grammar.md
+- [x] Integration into planner.ts (after M4C, before app generation)
+- [x] scaffold.ts: Dashboard layout variants (grid/rail/stacked) with grammar blocks
+- [x] components.ts: AppShell nav patterns (sidebar/top/hybrid)
+- [x] components.ts: New view components (CardList, KanbanBoard, Timeline, Feed, Modal, Drawer)
+- [x] pages.ts: Entity list pages use grammar's view type (table/cards/kanban/timeline/feed)
+- [x] pages.ts: createPattern support (page vs modal)
+- [x] Build passes for Oaxe and generated apps
+- [x] No routing collisions or broken links
+
+### Performance Implications
+- No runtime overhead - all computation at generation time
+- FNV-1a hash is O(n) where n is input length (fast)
+- No external dependencies
+
+### Security Implications
+- No security impact (UI structure only)
+
+### Design Decisions
+
+**Nav Pattern Selection:**
+- Category-driven defaults (legal/finance→sidebar, education/social→top, ecommerce/creative→hybrid)
+- Entity count influences pattern (5+ entities → sidebar, 1-2 entities → can use top)
+- Seed-based variance within defaults
+
+**Dashboard Layout Selection:**
+- Mood-driven layouts (minimal/calm→stacked, bold→rail, professional→grid)
+- Category overrides (finance/legal→grid, social/creative→rail, wellness→stacked)
+- Many entities (4+) favor grid layout
+
+**Entity View Type Detection:**
+- status/stage/state field → kanban
+- date/time/timestamp field → timeline
+- content/body/message field → feed
+- Few fields + spacious density → cards
+- Default → table
+
+**View Diversity Guardrail:**
+If 3+ entities all have same view type, the second entity's view is changed to ensure structural variety.
+
+**Create Pattern:**
+- Many fields (>6) → page
+- Minimal/professional mood → page (preferred)
+- Friendly/playful mood → modal (50% chance)
+
+### Files Created
+- generators/layoutGrammar.ts: Main grammar generator
+
+### Files Modified
+- types.ts: Added LayoutGrammar types
+- schemas.ts: Added LayoutGrammarSchema
+- runStore.ts: Added setLayoutGrammar()
+- planner.ts: Added layout grammar generation step
+- generators/index.ts: Added layoutGrammar parameter to generateApp
+- generators/scaffold.ts: Dashboard layout variants
+- generators/components.ts: Nav patterns, new view components
+- generators/pages.ts: Entity view types, create patterns
+
+### Test Plan
+
+**Test 1: Two different directives produce different layouts**
+```bash
+# Terminal 1: Generate legal app
+curl -X POST http://localhost:3000/api/runs -H "Content-Type: application/json" \
+  -d '{"directive": "legal case management system for law firms"}'
+
+# Terminal 2: Generate wellness app
+curl -X POST http://localhost:3000/api/runs -H "Content-Type: application/json" \
+  -d '{"directive": "wellness ritual tracker for mindful living"}'
+```
+
+**Expected Differences:**
+- Legal: sidebar nav, grid dashboard, compact density, table views, page create pattern
+- Wellness: top nav, stacked dashboard, spacious density, cards/timeline views, modal create possible
+
+**Test 2: Verify layout grammar in run output**
+```bash
+cat data/runs/*.json | jq '.layoutGrammar'
+```
+
+**Expected:** layoutGrammar object with navPattern, dashboardLayout, entityViews, etc.
+
+**Test 3: Verify docs/layout-grammar.md exists**
+```bash
+cat docs/layout-grammar.md
+```
+
+**Expected:** Markdown documentation of layout grammar
+
+**Test 4: Generate and build app**
+```bash
+cd generated/<app-name>
+pnpm install
+pnpm build
+```
+
+**Expected:** Build succeeds with no TypeScript errors
+
+**Test 5: Visual verification**
+1. Start generated app: `pnpm dev`
+2. Open http://localhost:3001 (or assigned port)
+3. Verify:
+   - Dashboard has grammar-driven layout (grid/rail/stacked)
+   - Navigation matches navPattern (sidebar/top/hybrid)
+   - Entity list pages show correct view type (table/cards/kanban/timeline/feed)
+   - Create button opens modal (if createPattern=modal) or navigates to /new page
+
+---
+
+## [M5C] Visual Emphasis & Hierarchy Amplification
+
+**Status:** Complete
+**Owner:** @engineer
+**Dependencies:** [M5B]
+**Priority:** P0
+
+### Objective
+Eliminate the remaining "generic SaaS" look by amplifying visual hierarchy, emphasis, and component personality using existing LayoutGrammar, BrandDNA, VisualSignature, Iconography, and Token systems. This milestone must make two generated apps feel visually distinct at a glance, even if they share components and layouts.
+
+### Acceptance Criteria
+- [x] Emphasis coefficient model implemented
+- [x] Component styling modulation applied (Button, Card, DataTable, EntityForm, Sidebar)
+- [x] Section weighting enforced (primary/secondary/tertiary)
+- [x] Category-native heuristics active (12 categories with density, separators, hierarchy, decoration)
+- [x] VisualSignature dimensions visibly expressed (shape, density, contrast, motion, layout)
+- [x] run.visualEmphasis persisted to run JSON
+- [x] TypeScript and build pass
+
+### Performance Implications
+- No runtime overhead - all computation at generation time
+- Pure functions for all derivations
+
+### Security Implications
+- No security impact (UI styling only)
+
+### Design Decisions
+
+**Dashboard Focus Styles:**
+- metrics-first: High visual weight on KPI cards (legal, finance)
+- narrative: Headings and copy dominate, data recedes (wellness, education)
+- workflow-first: Entity views dominate, chrome minimized (technology, healthcare)
+
+**Component Personality Modulation:**
+Components affected: Button, Card, DataTable, EntityForm, Sidebar
+Modulation via:
+- paddingScale: 0.85 (tight) to 1.25 (generous)
+- radiusPreference: tighter | baseline | softer
+- borderVisibility: clear | subtle | minimal
+- shadowUsage: pronounced | standard | minimal | none
+- ctaProminence: high | medium | low
+- textContrast: high | medium | low
+
+**Category-Native Defaults (12 categories):**
+- Legal/Finance: dense layouts, strong separators, pronounced hierarchy, minimal decoration
+- Wellness: spacious layouts, soft separators, subtle hierarchy, moderate decoration
+- Social/Content: balanced layouts, soft separators, subtle hierarchy, flow-based emphasis
+- Technology: balanced layouts, standard separators, balanced hierarchy, minimal decoration
+
+**Section-Level Visual Weighting:**
+Within dashboards and entity pages:
+- Primary section: visually dominant (larger headings, optional border emphasis)
+- Secondary sections: visually reduced (normal sizing)
+- Tertiary sections: muted (background shift, reduced contrast)
+
+**Visual Signature Enforcement:**
+If a visualSignature dimension exists, it has visible impact:
+- Shape → radius + container silhouettes
+- Density → padding, gap, row height
+- Contrast → divider visibility, bg layering
+- Motion → transition presence + timing (descriptive only)
+- Layout → section grouping behavior
+
+### Files Created
+- generators/visualEmphasis.ts: Main emphasis generator with category/archetype/mood-based derivation
+
+### Files Modified
+- types.ts: Added VisualEmphasis, ComponentPersonality, SectionWeight, DashboardFocus types
+- schemas.ts: Added VisualEmphasisSchema, ComponentPersonalitySchema, SectionWeightSchema
+- runStore.ts: Added setVisualEmphasis(), getLatestVisualEmphasis()
+- planner.ts: Added visual emphasis generation step (after M5B, before app generation)
+- generators/index.ts: Added visualEmphasis parameter to generateApp, exported emphasis helpers
+- generators/scaffold.ts: Dashboard sections use section weighting
+- generators/components.ts: Button, Card use emphasis modulation
+- generators/pages.ts: Accept visualEmphasis parameter
+
+### Example Visual Differences
+
+**Legal App (legal / professional / Ruler):**
+- Dashboard Focus: metrics-first
+- Density: dense (paddingScale: 0.85)
+- Separators: strong (clear borders)
+- Hierarchy: pronounced (larger primary section headings)
+- CTA Prominence: medium
+- Text Contrast: high
+
+**Wellness App (wellness / calm / Caregiver):**
+- Dashboard Focus: narrative
+- Density: spacious (paddingScale: 1.25)
+- Separators: soft (minimal borders)
+- Hierarchy: subtle (even section weights)
+- CTA Prominence: low
+- Text Contrast: medium
+
+---
+
 ## [M5] UI Flow Generation
 
 **Status:** Not Started

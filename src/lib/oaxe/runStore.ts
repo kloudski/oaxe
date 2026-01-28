@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import type { Run, LogEntry, GeneratedApp, BrandDNA, LaunchAssets, EvolutionRoadmap } from './types';
+import type { Run, LogEntry, GeneratedApp, BrandDNA, LaunchAssets, EvolutionRoadmap, LayoutGrammar, VisualEmphasis } from './types';
 import { generateRunFilename } from './slug';
 
 const DATA_DIR = path.join(process.cwd(), 'data', 'runs');
@@ -251,6 +251,75 @@ export async function getLatestEvolution(): Promise<EvolutionRoadmap | null> {
   for (const run of runs) {
     if (run.evolution) {
       return run.evolution;
+    }
+  }
+  return null;
+}
+
+/**
+ * M5B: Set Layout Grammar for a run
+ * - Embeds in run.layoutGrammar
+ * - Also persists to docs/layout-grammar.md
+ */
+export async function setLayoutGrammar(
+  id: string,
+  layoutGrammar: LayoutGrammar,
+  grammarMarkdown: string
+): Promise<void> {
+  const run = await getRun(id);
+  if (!run) return;
+
+  // Embed in run
+  run.layoutGrammar = layoutGrammar;
+  await saveRun(run);
+
+  // Also persist to docs/layout-grammar.md
+  await saveLayoutGrammarMarkdown(grammarMarkdown);
+}
+
+/**
+ * M5B: Save layout grammar to docs/layout-grammar.md
+ */
+async function saveLayoutGrammarMarkdown(content: string): Promise<void> {
+  await fs.mkdir(DOCS_DIR, { recursive: true });
+  const filepath = path.join(DOCS_DIR, 'layout-grammar.md');
+  await fs.writeFile(filepath, content, 'utf-8');
+}
+
+/**
+ * M5B: Get latest layout grammar from a completed run
+ */
+export async function getLatestLayoutGrammar(): Promise<LayoutGrammar | null> {
+  const runs = await listRuns();
+  for (const run of runs) {
+    if (run.layoutGrammar) {
+      return run.layoutGrammar;
+    }
+  }
+  return null;
+}
+
+/**
+ * M5C: Set Visual Emphasis for a run
+ * - Embeds in run.visualEmphasis
+ */
+export async function setVisualEmphasis(id: string, visualEmphasis: VisualEmphasis): Promise<void> {
+  const run = await getRun(id);
+  if (!run) return;
+
+  // Embed in run
+  run.visualEmphasis = visualEmphasis;
+  await saveRun(run);
+}
+
+/**
+ * M5C: Get latest visual emphasis from a completed run
+ */
+export async function getLatestVisualEmphasis(): Promise<VisualEmphasis | null> {
+  const runs = await listRuns();
+  for (const run of runs) {
+    if (run.visualEmphasis) {
+      return run.visualEmphasis;
     }
   }
   return null;

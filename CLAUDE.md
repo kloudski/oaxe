@@ -63,3 +63,28 @@ Claude must stop execution when:
 - A dependency milestone is missing
 - A new architectural decision is required
 
+---
+
+## Feedback Loop Exception (M5D+ Only)
+
+For milestones explicitly labeled as:
+- “feedback-loop”
+- “quality-gated”
+- “iterative generation”
+
+Claude is permitted to:
+
+- Evaluate generated output against deterministic heuristics
+- Perform up to TWO internal regeneration passes
+- Modify generator behavior between passes
+- Persist evaluation metadata in run artifacts
+
+Constraints still apply:
+- No new dependencies
+- No infra changes
+- No non-deterministic behavior
+- No infinite loops
+- Must stop and report failure if thresholds cannot be met
+
+This exception exists solely to allow Oaxe to function as a true
+app builder rather than a single-pass generator.

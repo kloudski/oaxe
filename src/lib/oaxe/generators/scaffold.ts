@@ -1,4 +1,4 @@
-import type { OaxeOutput, BrandDNA } from '../types';
+import type { OaxeOutput, BrandDNA, LayoutGrammar, DashboardLayout, DashboardBlock, VisualEmphasis } from '../types';
 import type { GeneratedFile } from './types';
 import { generateTokenizedTailwindConfig, generateTokenizedGlobalsCss } from './tokens';
 import {
@@ -11,6 +11,10 @@ import {
   getCardElevation,
   type EmphasisStrategy,
 } from './brandExpression';
+import {
+  getCardEmphasisClasses,
+  getSectionEmphasisClasses,
+} from './visualEmphasis';
 
 function getFirstPageRoute(output: OaxeOutput): string {
   // Find first non-root page, or default to /dashboard
@@ -23,10 +27,12 @@ function getFirstPageRoute(output: OaxeOutput): string {
 }
 
 /**
- * M5A: Generate scaffold with Brand DNA expression
+ * M5A/M5B/M5C: Generate scaffold with Brand DNA expression, Layout Grammar, and Visual Emphasis
  * Accepts optional BrandDNA for dashboard personality and brand moments
+ * Accepts optional LayoutGrammar for dashboard layout variants
+ * Accepts optional VisualEmphasis for section weighting and hierarchy amplification
  */
-export function generateScaffold(output: OaxeOutput, directive: string = '', brandDNA?: BrandDNA): GeneratedFile[] {
+export function generateScaffold(output: OaxeOutput, directive: string = '', brandDNA?: BrandDNA, layoutGrammar?: LayoutGrammar, visualEmphasis?: VisualEmphasis): GeneratedFile[] {
   const files: GeneratedFile[] = [];
   const firstPageRoute = getFirstPageRoute(output);
 
@@ -35,6 +41,13 @@ export function generateScaffold(output: OaxeOutput, directive: string = '', bra
   const dashboardPersonality = brandDNA ? getDashboardPersonality(brandDNA) : null;
   const quickActionsTitle = brandDNA ? getQuickActionsTitle(brandDNA) : 'Get Started';
   const featuresTitle = brandDNA ? getFeaturesTitle(brandDNA) : 'Core Features';
+
+  // M5B: Extract layout grammar settings
+  const dashboardLayout = layoutGrammar?.dashboardLayout || 'grid';
+  const dashboardBlocks = layoutGrammar?.dashboardBlocks || [];
+
+  // M5C: Extract visual emphasis settings
+  const dashboardFocus = visualEmphasis?.dashboardFocus || 'workflow-first';
 
   // M5A: Get at most ONE brand moment for dashboard
   const dashboardMoment = brandDNA
@@ -254,7 +267,7 @@ export default function Home() {
 `,
   });
 
-  // src/app/(app)/page.tsx (dashboard) - M5A: Uses brand expression
+  // src/app/(app)/page.tsx (dashboard) - M5A: Uses brand expression, M5B: Uses layout grammar
   const entityCount = output.entities.length;
   const pageCount = output.pages.length;
 
@@ -274,111 +287,280 @@ export default function Home() {
   // M5A: Dashboard block composition based on personality
   const blockType = dashboardPersonality?.blockType || 'actions_first';
 
-  // Generate stats block
+  // M5B: Generate layout-specific grid classes
+  const getLayoutGridClass = (layout: DashboardLayout): string => {
+    switch (layout) {
+      case 'grid':
+        return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5';
+      case 'rail':
+        return 'flex flex-col lg:flex-row gap-6';
+      case 'stacked':
+        return 'flex flex-col gap-6';
+      default:
+        return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5';
+    }
+  };
+
+  // M5B: Generate block span class based on layout
+  const getBlockSpanClass = (layout: DashboardLayout, span: number): string => {
+    if (layout === 'stacked') return 'w-full';
+    if (layout === 'rail') return span >= 3 ? 'lg:flex-[2]' : 'lg:flex-1';
+    // Grid layout
+    switch (span) {
+      case 4: return 'md:col-span-2 lg:col-span-4';
+      case 3: return 'md:col-span-2 lg:col-span-3';
+      case 2: return 'md:col-span-2';
+      default: return '';
+    }
+  };
+
+  // M5B: Generate dashboard blocks from grammar
+  const generateGrammarBlocks = (): string => {
+    if (!dashboardBlocks.length) return '';
+
+    return dashboardBlocks.map(block => {
+      const spanClass = getBlockSpanClass(dashboardLayout, block.span);
+      const className = spanClass ? ` className="${spanClass}"` : '';
+
+      switch (block.type) {
+        case 'stats':
+          return `
+        <div${className}>
+          <Card${primaryCardClass ? ` className="${primaryCardClass}"` : ''}>
+            <CardHeader title="${block.title}" />
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center py-2">
+                <p className="text-2xl font-semibold tracking-tight text-fg">${entityCount}</p>
+                <p className="text-sm text-fg-muted mt-1">Entities</p>
+              </div>
+              <div className="text-center py-2">
+                <p className="text-2xl font-semibold tracking-tight text-fg">${pageCount}</p>
+                <p className="text-sm text-fg-muted mt-1">Pages</p>
+              </div>
+              <div className="text-center py-2">
+                <p className="text-2xl font-semibold tracking-tight text-fg">${output.apis.length}</p>
+                <p className="text-sm text-fg-muted mt-1">APIs</p>
+              </div>
+            </div>
+          </Card>
+        </div>`;
+
+        case 'list':
+          const entity = output.entities.find(e => e.name === block.entityName) || output.entities[0];
+          return `
+        <div${className}>
+          <Card padding="lg">
+            <CardHeader title="${block.title}" />
+            <div className="space-y-2 mt-2">
+              <p className="text-sm text-fg-muted">Recent ${entity?.name || 'items'} will appear here</p>
+              <a href="/${(entity?.name || 'items').toLowerCase()}" className="text-sm text-primary hover:underline">View all →</a>
+            </div>
+          </Card>
+        </div>`;
+
+        case 'chart':
+          return `
+        <div${className}>
+          <Card padding="lg">
+            <CardHeader title="${block.title}" />
+            <div className="h-32 flex items-center justify-center bg-muted rounded-lg">
+              <p className="text-sm text-fg-muted">Chart placeholder</p>
+            </div>
+          </Card>
+        </div>`;
+
+        case 'actions':
+          return `
+        <div${className}>
+          <Card padding="lg">
+            <CardHeader title="${block.title}" />
+            <div className="grid grid-cols-1 gap-2 mt-2">
+              ${output.pages.slice(0, 3).map(page => {
+                const route = page.route.replace(/^\/+/, '');
+                const label = route.split('/')[0] || 'Home';
+                const titleCase = label.charAt(0).toUpperCase() + label.slice(1);
+                return `<a href="/${route}" className="flex items-center gap-2 p-2 rounded hover:bg-muted transition-colors">
+                <span className="text-sm text-fg">${titleCase}</span>
+              </a>`;
+              }).join('\n              ')}
+            </div>
+          </Card>
+        </div>`;
+
+        case 'activity':
+          return `
+        <div${className}>
+          <Card padding="lg">
+            <CardHeader title="${block.title}" />
+            <div className="space-y-2 mt-2">
+              <p className="text-sm text-fg-muted">No recent activity</p>
+            </div>
+          </Card>
+        </div>`;
+
+        case 'moment':
+          if (!formattedMoment) return '';
+          return `
+        <div${className}>
+          <div className="p-4 rounded-lg border border-primary/20 bg-primary-muted/50">
+            <p className="text-sm font-medium text-fg">${formattedMoment.title}</p>
+            <p className="text-sm text-fg-secondary mt-1">${formattedMoment.message}</p>
+          </div>
+        </div>`;
+
+        default:
+          return '';
+      }
+    }).filter(Boolean).join('\n');
+  };
+
+  // M5C: Get section emphasis classes
+  const primarySection = visualEmphasis ? getSectionEmphasisClasses(visualEmphasis, 'primary') : null;
+  const secondarySection = visualEmphasis ? getSectionEmphasisClasses(visualEmphasis, 'secondary') : null;
+  const tertiarySection = visualEmphasis ? getSectionEmphasisClasses(visualEmphasis, 'tertiary') : null;
+  const primaryCardEmphasis = visualEmphasis ? getCardEmphasisClasses(visualEmphasis, true) : '';
+  const secondaryCardEmphasis = visualEmphasis ? getCardEmphasisClasses(visualEmphasis, false) : '';
+
+  // M5C: Determine heading sizes based on section weights
+  const primaryHeadingClass = primarySection?.heading || 'text-lg font-semibold';
+  const secondaryHeadingClass = secondarySection?.heading || 'text-base font-medium';
+
+  // M5C: Stats section - primary emphasis for metrics-first, secondary otherwise
+  const statsEmphasis = dashboardFocus === 'metrics-first' ? primarySection : secondarySection;
+  const statsCardClass = dashboardFocus === 'metrics-first' ? primaryCardEmphasis : secondaryCardEmphasis;
+
+  // Generate stats block (fallback when no grammar)
   const statsBlock = `
-      {/* Stats overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <Card${primaryCardClass ? ` className="${primaryCardClass}"` : ''}>
-          <div className="text-center py-2">
-            <p className="text-3xl font-semibold tracking-tight text-fg">${entityCount}</p>
-            <p className="text-sm text-fg-muted mt-1">Entities</p>
-          </div>
-        </Card>
-        <Card>
-          <div className="text-center py-2">
-            <p className="text-3xl font-semibold tracking-tight text-fg">${pageCount}</p>
-            <p className="text-sm text-fg-muted mt-1">Pages</p>
-          </div>
-        </Card>
-        <Card>
-          <div className="text-center py-2">
-            <p className="text-3xl font-semibold tracking-tight text-fg">${output.apis.length}</p>
-            <p className="text-sm text-fg-muted mt-1">API Routes</p>
+      {/* Stats overview - ${dashboardFocus === 'metrics-first' ? 'Primary' : 'Secondary'} section */}
+      <div className="${statsEmphasis?.wrapper || ''} ${statsEmphasis?.wrapper ? 'rounded-lg' : ''}">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <Card${statsCardClass ? ` className="${statsCardClass}"` : primaryCardClass ? ` className="${primaryCardClass}"` : ''}>
+            <div className="text-center py-2">
+              <p className="${dashboardFocus === 'metrics-first' ? 'text-4xl' : 'text-3xl'} font-semibold tracking-tight text-fg">${entityCount}</p>
+              <p className="text-sm text-fg-muted mt-1">Entities</p>
+            </div>
+          </Card>
+          <Card${secondaryCardEmphasis ? ` className="${secondaryCardEmphasis}"` : ''}>
+            <div className="text-center py-2">
+              <p className="${dashboardFocus === 'metrics-first' ? 'text-4xl' : 'text-3xl'} font-semibold tracking-tight text-fg">${pageCount}</p>
+              <p className="text-sm text-fg-muted mt-1">Pages</p>
+            </div>
+          </Card>
+          <Card${secondaryCardEmphasis ? ` className="${secondaryCardEmphasis}"` : ''}>
+            <div className="text-center py-2">
+              <p className="${dashboardFocus === 'metrics-first' ? 'text-4xl' : 'text-3xl'} font-semibold tracking-tight text-fg">${output.apis.length}</p>
+              <p className="text-sm text-fg-muted mt-1">API Routes</p>
+            </div>
+          </Card>
+        </div>
+      </div>`;
+
+  // M5C: Actions section - primary emphasis for workflow-first, secondary otherwise
+  const actionsEmphasis = dashboardFocus === 'workflow-first' ? primarySection : secondarySection;
+  const actionsCardClass = dashboardFocus === 'workflow-first' ? primaryCardEmphasis : secondaryCardEmphasis;
+
+  // Generate quick actions block (fallback when no grammar)
+  const actionsBlock = `
+      {/* Quick actions - ${dashboardFocus === 'workflow-first' ? 'Primary' : 'Secondary'} section */}
+      <div className="${actionsEmphasis?.wrapper || ''} ${actionsEmphasis?.wrapper ? 'rounded-lg' : ''}">
+        <Card padding="lg"${actionsCardClass ? ` className="${actionsCardClass}"` : ''}>
+          <CardHeader
+            title="${quickActionsTitle}"
+            description="${brandDNA?.mood === 'minimal' ? '' : `Quick actions to help you get started with ${output.appName}`}"
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1">
+            ${output.pages.slice(0, 4).map(page => {
+              const route = page.route.replace(/^\/+/, '');
+              const label = route.split('/')[0] || 'Home';
+              const titleCase = label.charAt(0).toUpperCase() + label.slice(1);
+              return `
+            <a
+              href="/${route}"
+              className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-border-strong hover:bg-muted transition-all duration-150 group"
+            >
+              <div className="w-10 h-10 bg-primary-muted rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-fg group-hover:text-primary transition-colors">${titleCase}</p>
+                <p className="text-sm text-fg-muted truncate">${page.purpose.replace(/'/g, "\\'").substring(0, 50)}...</p>
+              </div>
+            </a>`;
+            }).join('')}
           </div>
         </Card>
       </div>`;
 
-  // Generate quick actions block
-  const actionsBlock = `
-      {/* Quick actions */}
-      <Card padding="lg">
-        <CardHeader
-          title="${quickActionsTitle}"
-          description="${brandDNA?.mood === 'minimal' ? '' : `Quick actions to help you get started with ${output.appName}`}"
-        />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1">
-          ${output.pages.slice(0, 4).map(page => {
-            const route = page.route.replace(/^\/+/, '');
-            const label = route.split('/')[0] || 'Home';
-            const titleCase = label.charAt(0).toUpperCase() + label.slice(1);
-            return `
-          <a
-            href="/${route}"
-            className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-border-strong hover:bg-muted transition-all duration-150 group"
-          >
-            <div className="w-10 h-10 bg-primary-muted rounded-lg flex items-center justify-center flex-shrink-0">
-              <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <div className="min-w-0">
-              <p className="font-medium text-fg group-hover:text-primary transition-colors">${titleCase}</p>
-              <p className="text-sm text-fg-muted truncate">${page.purpose.replace(/'/g, "\\'").substring(0, 50)}...</p>
-            </div>
-          </a>`;
-          }).join('')}
-        </div>
-      </Card>`;
+  // M5C: Features section - primary emphasis for narrative, tertiary otherwise
+  const featuresEmphasis = dashboardFocus === 'narrative' ? primarySection : tertiarySection;
+  const featuresCardClass = dashboardFocus === 'narrative' ? primaryCardEmphasis : secondaryCardEmphasis;
 
-  // Generate features block
+  // Generate features block (fallback when no grammar)
   const featuresBlock = `
-      {/* Features */}
-      <Card padding="lg">
-        <CardHeader
-          title="${featuresTitle}"
-          description="${brandDNA?.mood === 'minimal' ? '' : `What ${output.appName} offers`}"
-        />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-1">
-          ${output.productSpec.coreFeatures.slice(0, 6).map((feature, i) => `
-          <div className="p-4 rounded-lg border border-border-subtle bg-muted">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 bg-primary-muted rounded flex items-center justify-center">
-                <span className="text-xs font-semibold text-primary-600">${i + 1}</span>
+      {/* Features - ${dashboardFocus === 'narrative' ? 'Primary' : 'Tertiary'} section */}
+      <div className="${featuresEmphasis?.wrapper || ''} ${featuresEmphasis?.wrapper ? 'rounded-lg' : ''}">
+        <Card padding="lg"${featuresCardClass ? ` className="${featuresCardClass}"` : ''}>
+          <CardHeader
+            title="${featuresTitle}"
+            description="${brandDNA?.mood === 'minimal' ? '' : `What ${output.appName} offers`}"
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-1">
+            ${output.productSpec.coreFeatures.slice(0, 6).map((feature, i) => `
+            <div className="p-4 rounded-lg border border-border-subtle ${tertiarySection?.wrapper || 'bg-muted'}">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 bg-primary-muted rounded flex items-center justify-center">
+                  <span className="text-xs font-semibold text-primary-600">${i + 1}</span>
+                </div>
+                <span className="text-sm font-medium text-fg">Feature ${i + 1}</span>
               </div>
-              <span className="text-sm font-medium text-fg">Feature ${i + 1}</span>
-            </div>
-            <p className="text-sm text-fg-secondary">${feature.replace(/'/g, "\\'")}</p>
-          </div>`).join('')}
-        </div>
-      </Card>`;
+              <p className="text-sm ${tertiarySection?.content || 'text-fg-secondary'}">${feature.replace(/'/g, "\\'")}</p>
+            </div>`).join('')}
+          </div>
+        </Card>
+      </div>`;
 
-  // M5A: Compose dashboard blocks based on personality type
-  let dashboardBlocks: string;
-  switch (blockType) {
-    case 'metrics_first':
-      // Analytics, finance, legal - lead with numbers
-      dashboardBlocks = `${statsBlock}
+  // M5B: Use grammar blocks if available, else fall back to M5A personality blocks
+  let dashboardBlocksContent: string;
+
+  if (dashboardBlocks.length > 0) {
+    // M5B: Grammar-driven dashboard
+    const layoutGridClass = getLayoutGridClass(dashboardLayout);
+    const grammarBlocksContent = generateGrammarBlocks();
+    dashboardBlocksContent = `
+      {/* M5B: Grammar-driven ${dashboardLayout} layout */}
+      <div className="${layoutGridClass}">
+${grammarBlocksContent}
+      </div>`;
+  } else {
+    // M5A: Personality-driven dashboard (fallback)
+    switch (blockType) {
+      case 'metrics_first':
+        // Analytics, finance, legal - lead with numbers
+        dashboardBlocksContent = `${statsBlock}
 ${brandMomentBlock}${actionsBlock}
 ${featuresBlock}`;
-      break;
-    case 'guidance_first':
-      // Healthcare, wellness, education - lead with features/guidance
-      dashboardBlocks = `${brandMomentBlock}${featuresBlock}
+        break;
+      case 'guidance_first':
+        // Healthcare, wellness, education - lead with features/guidance
+        dashboardBlocksContent = `${brandMomentBlock}${featuresBlock}
 ${actionsBlock}
 ${statsBlock}`;
-      break;
-    case 'activity_first':
-      // Social, ecommerce, energy - lead with actions
-      dashboardBlocks = `${brandMomentBlock}${actionsBlock}
+        break;
+      case 'activity_first':
+        // Social, ecommerce, energy - lead with actions
+        dashboardBlocksContent = `${brandMomentBlock}${actionsBlock}
 ${statsBlock}
 ${featuresBlock}`;
-      break;
-    case 'actions_first':
-    default:
-      // Technology, productivity, creative - balanced with actions first
-      dashboardBlocks = `${statsBlock}
+        break;
+      case 'actions_first':
+      default:
+        // Technology, productivity, creative - balanced with actions first
+        dashboardBlocksContent = `${statsBlock}
 ${brandMomentBlock}${actionsBlock}
 ${featuresBlock}`;
+    }
   }
 
   files.push({
@@ -394,7 +576,7 @@ export default function Dashboard() {
         <p className="text-fg-secondary mt-2 max-w-2xl">${output.elevatorPitch.replace(/'/g, "\\'")}</p>${welcomeMessage ? `
         <p className="text-fg-muted mt-1">${welcomeMessage}</p>` : ''}
       </div>
-${dashboardBlocks}
+${dashboardBlocksContent}
     </div>
   );
 }

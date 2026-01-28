@@ -1,6 +1,13 @@
-import type { OaxeOutput } from '../types';
+import type { OaxeOutput, LayoutGrammar, NavPattern, VisualEmphasis } from '../types';
 import type { GeneratedFile } from './types';
 import { RESERVED_APP_ROUTES, getEntityBasePath, getEntityLabel } from './pages';
+import {
+  getButtonEmphasisClasses,
+  getCardEmphasisClasses,
+  getDataTableEmphasisClasses,
+  getSidebarEmphasisClasses,
+  getFormEmphasisClasses,
+} from './visualEmphasis';
 
 function pascalCase(str: string): string {
   return str
@@ -41,7 +48,19 @@ function mapFieldToInputType(type: string): string {
   }
 }
 
-function generateAppShell(output: OaxeOutput): string {
+function generateAppShell(output: OaxeOutput, navPattern: NavPattern = 'sidebar'): string {
+  // M5B: Different shell layouts based on nav pattern
+  if (navPattern === 'top') {
+    return generateTopNavShell(output);
+  }
+  if (navPattern === 'hybrid') {
+    return generateHybridNavShell(output);
+  }
+  // Default: sidebar
+  return generateSidebarNavShell(output);
+}
+
+function generateSidebarNavShell(output: OaxeOutput): string {
   return `'use client';
 
 import { useState } from 'react';
@@ -99,6 +118,177 @@ export function AppShell({ children }: AppShellProps) {
       </header>
 
       {/* Sidebar */}
+      <Sidebar isOpen={sidebarOpen} />
+
+      {/* Main content */}
+      <main
+        className={\`pt-14 transition-all duration-200 \${
+          sidebarOpen ? 'pl-60' : 'pl-0'
+        }\`}
+      >
+        <div className="p-6 md:p-8 max-w-7xl">{children}</div>
+      </main>
+    </div>
+  );
+}
+`;
+}
+
+function generateTopNavShell(output: OaxeOutput): string {
+  return `'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { ThemeToggle } from './ThemeToggle';
+
+interface AppShellProps {
+  children: React.ReactNode;
+}
+
+const navItems = ${JSON.stringify(
+  output.entities.map(e => ({
+    route: '/' + getEntityBasePath(e.name),
+    label: getEntityLabel(e.name),
+  })),
+  null,
+  2
+)};
+
+export function AppShell({ children }: AppShellProps) {
+  const pathname = usePathname();
+
+  return (
+    <div className="min-h-screen bg-bg-secondary">
+      {/* Top navigation header - M5B */}
+      <header className="fixed top-0 left-0 right-0 h-14 bg-surface border-b border-border z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <a href="/" className="text-base font-semibold text-fg tracking-tight">
+              ${output.appName}
+            </a>
+            <nav className="hidden md:flex items-center gap-1">
+              <Link
+                href="/"
+                className={\`px-3 py-2 rounded text-sm font-medium transition-colors \${
+                  pathname === '/' || pathname === '/dashboard'
+                    ? 'bg-primary-muted text-primary-600'
+                    : 'text-fg-secondary hover:text-fg hover:bg-muted'
+                }\`}
+              >
+                Dashboard
+              </Link>
+              {navItems.map((item) => (
+                <Link
+                  key={item.route}
+                  href={item.route}
+                  className={\`px-3 py-2 rounded text-sm font-medium transition-colors \${
+                    pathname.startsWith(item.route)
+                      ? 'bg-primary-muted text-primary-600'
+                      : 'text-fg-secondary hover:text-fg hover:bg-muted'
+                  }\`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button className="p-2 hover:bg-muted rounded transition-colors">
+              <svg className="w-5 h-5 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+            <ThemeToggle />
+            <div className="w-8 h-8 rounded-full bg-primary-muted flex items-center justify-center">
+              <span className="text-sm font-medium text-primary-600">U</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main content - no sidebar */}
+      <main className="pt-14">
+        <div className="max-w-7xl mx-auto p-6 md:p-8">{children}</div>
+      </main>
+    </div>
+  );
+}
+`;
+}
+
+function generateHybridNavShell(output: OaxeOutput): string {
+  return `'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Sidebar } from './Sidebar';
+import { ThemeToggle } from './ThemeToggle';
+
+interface AppShellProps {
+  children: React.ReactNode;
+}
+
+const primaryNavItems = [
+  { route: '/', label: 'Dashboard' },
+  { route: '/settings', label: 'Settings' },
+];
+
+export function AppShell({ children }: AppShellProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const pathname = usePathname();
+
+  return (
+    <div className="min-h-screen bg-bg-secondary">
+      {/* Header with hybrid nav - M5B */}
+      <header className="fixed top-0 left-0 right-0 h-14 bg-surface border-b border-border z-40 shadow-sm">
+        <div className="px-4 h-full flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 hover:bg-muted rounded transition-colors"
+              aria-label="Toggle sidebar"
+            >
+              <svg className="w-5 h-5 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <a href="/" className="text-base font-semibold text-fg tracking-tight">
+              ${output.appName}
+            </a>
+            <nav className="hidden md:flex items-center gap-1 ml-4">
+              {primaryNavItems.map((item) => (
+                <Link
+                  key={item.route}
+                  href={item.route}
+                  className={\`px-3 py-2 rounded text-sm font-medium transition-colors \${
+                    (pathname === item.route || (item.route === '/' && pathname === '/dashboard'))
+                      ? 'bg-primary-muted text-primary-600'
+                      : 'text-fg-secondary hover:text-fg hover:bg-muted'
+                  }\`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button className="p-2 hover:bg-muted rounded transition-colors">
+              <svg className="w-5 h-5 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+            <ThemeToggle />
+            <div className="w-8 h-8 rounded-full bg-primary-muted flex items-center justify-center">
+              <span className="text-sm font-medium text-primary-600">U</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Sidebar for entity navigation */}
       <Sidebar isOpen={sidebarOpen} />
 
       {/* Main content */}
@@ -635,12 +825,17 @@ export function StatusBadge({ status, variant }: StatusBadgeProps) {
 `;
 }
 
-function generateButton(): string {
+function generateButton(buttonEmphasis: { primary: string; secondary: string } | null): string {
+  // M5C: Apply visual emphasis modulation to button styles
+  const primaryClasses = buttonEmphasis?.primary || 'px-4 py-2 rounded font-medium';
+  const secondaryClasses = buttonEmphasis?.secondary || 'px-4 py-2 rounded font-medium border';
+
   return `import { forwardRef } from 'react';
 
 /**
- * Button component using M3D structural tokens
+ * Button component using M3D structural tokens + M5C visual emphasis
  * Radius and shadow are derived from mood-based design tokens
+ * Padding and prominence are modulated by visual emphasis
  */
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
@@ -648,18 +843,18 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
 }
 
-// OKLCH token-based button variants with M3D structural tokens
+// OKLCH token-based button variants with M3D structural tokens + M5C emphasis
 const variantStyles = {
-  primary: 'bg-primary hover:bg-primary-hover text-primary-fg shadow-xs hover:shadow-sm',
-  secondary: 'bg-surface border border-border hover:border-border-strong hover:bg-muted text-fg shadow-xs',
+  primary: 'bg-primary hover:bg-primary-hover text-primary-fg ${primaryClasses}',
+  secondary: 'bg-surface border-border hover:border-border-strong hover:bg-muted text-fg ${secondaryClasses}',
   ghost: 'bg-transparent hover:bg-muted text-fg-secondary hover:text-fg',
-  danger: 'bg-error hover:bg-error-600 text-error-fg shadow-xs hover:shadow-sm',
+  danger: 'bg-error hover:bg-error-600 text-error-fg ${primaryClasses}',
 };
 
 const sizeStyles = {
-  sm: 'px-3 py-1.5 text-sm gap-1.5 rounded-sm',
-  md: 'px-4 py-2 text-sm gap-2 rounded',
-  lg: 'px-5 py-2.5 text-base gap-2 rounded-md',
+  sm: 'text-sm gap-1.5',
+  md: 'text-sm gap-2',
+  lg: 'text-base gap-2',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -687,10 +882,14 @@ Button.displayName = 'Button';
 `;
 }
 
-function generateCard(): string {
+function generateCard(cardEmphasis: string): string {
+  // M5C: Apply visual emphasis modulation to card styles
+  const emphasisClasses = cardEmphasis || 'p-5 rounded-lg shadow-sm border border-border';
+
   return `/**
- * Card component using M3D structural tokens
+ * Card component using M3D structural tokens + M5C visual emphasis
  * Radius and shadow are derived from mood-based design tokens
+ * Padding and elevation modulated by visual emphasis
  */
 interface CardProps {
   children: React.ReactNode;
@@ -713,9 +912,14 @@ const elevationStyles = {
   floating: 'shadow-md',
 };
 
+// M5C: Base emphasis styles from visual emphasis system
+const emphasisBase = '${emphasisClasses}';
+
 export function Card({ children, className = '', padding = 'md', elevation = 'raised' }: CardProps) {
+  // Override padding if explicitly set, otherwise use emphasis default
+  const paddingClass = padding !== 'md' ? paddingStyles[padding] : '';
   return (
-    <div className={\`bg-surface rounded-lg border border-border \${elevationStyles[elevation]} \${paddingStyles[padding]} \${className}\`}>
+    <div className={\`bg-surface \${emphasisBase} \${elevationStyles[elevation]} \${paddingClass} \${className}\`}>
       {children}
     </div>
   );
@@ -844,13 +1048,27 @@ export function ThemeInitScript() {
 `;
 }
 
-export function generateComponents(output: OaxeOutput): GeneratedFile[] {
+export function generateComponents(output: OaxeOutput, layoutGrammar?: LayoutGrammar, visualEmphasis?: VisualEmphasis): GeneratedFile[] {
   const files: GeneratedFile[] = [];
+  const navPattern = layoutGrammar?.navPattern || 'sidebar';
 
-  // AppShell component
+  // M5C: Get emphasis classes for component personality modulation
+  const buttonEmphasis = visualEmphasis ? getButtonEmphasisClasses(visualEmphasis) : null;
+  const cardEmphasis = visualEmphasis ? getCardEmphasisClasses(visualEmphasis, false) : '';
+  const tableEmphasis = visualEmphasis ? getDataTableEmphasisClasses(visualEmphasis) : null;
+  const sidebarEmphasis = visualEmphasis ? getSidebarEmphasisClasses(visualEmphasis) : null;
+  const formEmphasis = visualEmphasis ? getFormEmphasisClasses(visualEmphasis) : null;
+
+  // M5B: Check if Modal or Drawer are needed
+  const needsModal = layoutGrammar?.entityViews.some(
+    ev => ev.createPattern === 'modal' || ev.detailsPattern === 'modal'
+  );
+  const needsDrawer = layoutGrammar?.entityViews.some(ev => ev.detailsPattern === 'drawer');
+
+  // AppShell component - M5B: nav pattern aware
   files.push({
     path: 'src/components/AppShell.tsx',
-    content: generateAppShell(output),
+    content: generateAppShell(output, navPattern),
   });
 
   // Sidebar component
@@ -877,16 +1095,16 @@ export function generateComponents(output: OaxeOutput): GeneratedFile[] {
     content: generateStatusBadge(),
   });
 
-  // Button component
+  // Button component - M5C: pass emphasis modulation
   files.push({
     path: 'src/components/Button.tsx',
-    content: generateButton(),
+    content: generateButton(buttonEmphasis),
   });
 
-  // Card component
+  // Card component - M5C: pass emphasis modulation
   files.push({
     path: 'src/components/Card.tsx',
-    content: generateCard(),
+    content: generateCard(cardEmphasis),
   });
 
   // ThemeToggle component
@@ -901,7 +1119,50 @@ export function generateComponents(output: OaxeOutput): GeneratedFile[] {
     content: generateThemeInitScript(),
   });
 
-  // Components index
+  // M5B: CardList component for cards view type
+  files.push({
+    path: 'src/components/CardList.tsx',
+    content: generateCardList(),
+  });
+
+  // M5B: KanbanBoard component for kanban view type
+  files.push({
+    path: 'src/components/KanbanBoard.tsx',
+    content: generateKanbanBoard(),
+  });
+
+  // M5B: Timeline component for timeline view type
+  files.push({
+    path: 'src/components/Timeline.tsx',
+    content: generateTimeline(),
+  });
+
+  // M5B: Feed component for feed view type
+  files.push({
+    path: 'src/components/Feed.tsx',
+    content: generateFeed(),
+  });
+
+  // M5B: Modal component (if createPattern=modal or detailsPattern=modal)
+  if (needsModal) {
+    files.push({
+      path: 'src/components/Modal.tsx',
+      content: generateModal(),
+    });
+  }
+
+  // M5B: Drawer component (if detailsPattern=drawer)
+  if (needsDrawer) {
+    files.push({
+      path: 'src/components/Drawer.tsx',
+      content: generateDrawer(),
+    });
+  }
+
+  // Components index - M5B: Include new view components
+  const modalExport = needsModal ? "export { Modal } from './Modal';\n" : '';
+  const drawerExport = needsDrawer ? "export { Drawer } from './Drawer';\n" : '';
+
   files.push({
     path: 'src/components/index.ts',
     content: `export { AppShell } from './AppShell';
@@ -913,8 +1174,445 @@ export { Button } from './Button';
 export { Card, CardHeader, CardFooter } from './Card';
 export { ThemeToggle } from './ThemeToggle';
 export { ThemeInitScript } from './ThemeInitScript';
-`,
+export { CardList } from './CardList';
+export { KanbanBoard } from './KanbanBoard';
+export { Timeline } from './Timeline';
+export { Feed } from './Feed';
+${modalExport}${drawerExport}`,
   });
 
   return files;
+}
+
+// ============================================================================
+// M5B: NEW VIEW COMPONENTS
+// ============================================================================
+
+function generateCardList(): string {
+  return `'use client';
+
+import { Card } from './Card';
+
+interface CardListItem {
+  id: string;
+  title: string;
+  subtitle?: string;
+  [key: string]: unknown;
+}
+
+interface CardListProps<T extends CardListItem> {
+  data: T[];
+  onItemClick?: (item: T) => void;
+  emptyMessage?: string;
+  columns?: number;
+}
+
+export function CardList<T extends CardListItem>({
+  data,
+  onItemClick,
+  emptyMessage = 'No items',
+  columns = 3,
+}: CardListProps<T>) {
+  if (data.length === 0) {
+    return (
+      <div className="text-center py-12 bg-surface rounded-lg border border-border">
+        <p className="text-fg-muted">{emptyMessage}</p>
+      </div>
+    );
+  }
+
+  const gridCols = columns === 2 ? 'md:grid-cols-2' : columns === 4 ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-2 lg:grid-cols-3';
+
+  return (
+    <div className={\`grid grid-cols-1 \${gridCols} gap-4\`}>
+      {data.map((item) => (
+        <Card
+          key={item.id}
+          padding="md"
+          className={\`cursor-pointer hover:shadow-md transition-shadow \${onItemClick ? 'hover:border-primary/50' : ''}\`}
+        >
+          <div onClick={() => onItemClick?.(item)}>
+            <h3 className="font-medium text-fg">{item.title}</h3>
+            {item.subtitle && (
+              <p className="text-sm text-fg-muted mt-1">{item.subtitle}</p>
+            )}
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+`;
+}
+
+function generateKanbanBoard(): string {
+  return `'use client';
+
+import { Card } from './Card';
+
+interface KanbanItem {
+  id: string;
+  title: string;
+  status: string;
+  [key: string]: unknown;
+}
+
+interface KanbanColumn {
+  id: string;
+  title: string;
+  items: KanbanItem[];
+}
+
+interface KanbanBoardProps {
+  columns: KanbanColumn[];
+  onItemClick?: (item: KanbanItem) => void;
+  onDragEnd?: (itemId: string, targetColumn: string) => void;
+}
+
+export function KanbanBoard({
+  columns,
+  onItemClick,
+}: KanbanBoardProps) {
+  return (
+    <div className="flex gap-4 overflow-x-auto pb-4">
+      {columns.map((column) => (
+        <div
+          key={column.id}
+          className="flex-shrink-0 w-72 bg-muted rounded-lg p-3"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-fg">{column.title}</h3>
+            <span className="text-xs text-fg-muted bg-surface px-2 py-0.5 rounded">
+              {column.items.length}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {column.items.map((item) => (
+              <Card
+                key={item.id}
+                padding="sm"
+                className="cursor-pointer hover:shadow-sm transition-shadow"
+              >
+                <div onClick={() => onItemClick?.(item)}>
+                  <p className="text-sm font-medium text-fg">{item.title}</p>
+                </div>
+              </Card>
+            ))}
+            {column.items.length === 0 && (
+              <p className="text-xs text-fg-muted text-center py-4">
+                No items
+              </p>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+`;
+}
+
+function generateTimeline(): string {
+  return `'use client';
+
+interface TimelineItem {
+  id: string;
+  title: string;
+  date: string;
+  description?: string;
+  [key: string]: unknown;
+}
+
+interface TimelineProps<T extends TimelineItem> {
+  items: T[];
+  onItemClick?: (item: T) => void;
+  emptyMessage?: string;
+}
+
+export function Timeline<T extends TimelineItem>({
+  items,
+  onItemClick,
+  emptyMessage = 'No events',
+}: TimelineProps<T>) {
+  if (items.length === 0) {
+    return (
+      <div className="text-center py-12 bg-surface rounded-lg border border-border">
+        <p className="text-fg-muted">{emptyMessage}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      {/* Timeline line */}
+      <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
+
+      <div className="space-y-4">
+        {items.map((item) => (
+          <div
+            key={item.id}
+            className={\`relative pl-10 \${onItemClick ? 'cursor-pointer' : ''}\`}
+            onClick={() => onItemClick?.(item)}
+          >
+            {/* Timeline dot */}
+            <div className="absolute left-2.5 top-2 w-3 h-3 rounded-full bg-primary border-2 border-surface" />
+
+            <div className="bg-surface rounded-lg border border-border p-4 hover:shadow-sm transition-shadow">
+              <div className="flex items-start justify-between">
+                <h3 className="text-sm font-medium text-fg">{item.title}</h3>
+                <time className="text-xs text-fg-muted">{item.date}</time>
+              </div>
+              {item.description && (
+                <p className="text-sm text-fg-secondary mt-1">{item.description}</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+`;
+}
+
+function generateFeed(): string {
+  return `'use client';
+
+interface FeedItem {
+  id: string;
+  content: string;
+  author?: string;
+  timestamp?: string;
+  [key: string]: unknown;
+}
+
+interface FeedProps<T extends FeedItem> {
+  items: T[];
+  onItemClick?: (item: T) => void;
+  emptyMessage?: string;
+}
+
+export function Feed<T extends FeedItem>({
+  items,
+  onItemClick,
+  emptyMessage = 'No posts',
+}: FeedProps<T>) {
+  if (items.length === 0) {
+    return (
+      <div className="text-center py-12 bg-surface rounded-lg border border-border">
+        <p className="text-fg-muted">{emptyMessage}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {items.map((item) => (
+        <article
+          key={item.id}
+          className={\`bg-surface rounded-lg border border-border p-4 \${
+            onItemClick ? 'cursor-pointer hover:shadow-sm transition-shadow' : ''
+          }\`}
+          onClick={() => onItemClick?.(item)}
+        >
+          {(item.author || item.timestamp) && (
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-full bg-primary-muted flex items-center justify-center">
+                <span className="text-xs font-medium text-primary-600">
+                  {item.author?.charAt(0).toUpperCase() || 'U'}
+                </span>
+              </div>
+              <div>
+                {item.author && (
+                  <p className="text-sm font-medium text-fg">{item.author}</p>
+                )}
+                {item.timestamp && (
+                  <p className="text-xs text-fg-muted">{item.timestamp}</p>
+                )}
+              </div>
+            </div>
+          )}
+          <p className="text-fg">{item.content}</p>
+        </article>
+      ))}
+    </div>
+  );
+}
+`;
+}
+
+function generateModal(): string {
+  return `'use client';
+
+import { useEffect, useCallback } from 'react';
+
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  children: React.ReactNode;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+}
+
+const sizeStyles = {
+  sm: 'max-w-md',
+  md: 'max-w-lg',
+  lg: 'max-w-2xl',
+  xl: 'max-w-4xl',
+};
+
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = 'md',
+}: ModalProps) {
+  const handleEscape = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, handleEscape]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50"
+        onClick={onClose}
+      />
+
+      {/* Modal content */}
+      <div
+        className={\`relative w-full \${sizeStyles[size]} mx-4 bg-surface rounded-lg shadow-lg border border-border\`}
+      >
+        {/* Header */}
+        {title && (
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <h2 className="text-lg font-semibold text-fg">{title}</h2>
+            <button
+              onClick={onClose}
+              className="p-1 rounded hover:bg-muted transition-colors"
+            >
+              <svg className="w-5 h-5 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Body */}
+        <div className="p-4 max-h-[70vh] overflow-y-auto">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+`;
+}
+
+function generateDrawer(): string {
+  return `'use client';
+
+import { useEffect, useCallback } from 'react';
+
+interface DrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  children: React.ReactNode;
+  position?: 'left' | 'right';
+  size?: 'sm' | 'md' | 'lg';
+}
+
+const sizeStyles = {
+  sm: 'w-80',
+  md: 'w-96',
+  lg: 'w-[480px]',
+};
+
+export function Drawer({
+  isOpen,
+  onClose,
+  title,
+  children,
+  position = 'right',
+  size = 'md',
+}: DrawerProps) {
+  const handleEscape = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, handleEscape]);
+
+  const positionClass = position === 'left' ? 'left-0' : 'right-0';
+  const transformClass = position === 'left'
+    ? (isOpen ? 'translate-x-0' : '-translate-x-full')
+    : (isOpen ? 'translate-x-0' : 'translate-x-full');
+
+  return (
+    <>
+      {/* Backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Drawer */}
+      <div
+        className={\`fixed top-0 bottom-0 \${positionClass} z-50 \${sizeStyles[size]} bg-surface border-l border-border shadow-lg transform transition-transform duration-300 \${transformClass}\`}
+      >
+        {/* Header */}
+        {title && (
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <h2 className="text-lg font-semibold text-fg">{title}</h2>
+            <button
+              onClick={onClose}
+              className="p-1 rounded hover:bg-muted transition-colors"
+            >
+              <svg className="w-5 h-5 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Body */}
+        <div className="p-4 overflow-y-auto h-full">
+          {children}
+        </div>
+      </div>
+    </>
+  );
+}
+`;
 }

@@ -1,4 +1,4 @@
-import type { OaxeOutput, BrandDNA } from '../types';
+import type { OaxeOutput, BrandDNA, LayoutGrammar, EntityViewType, EntityViewConfig, VisualEmphasis } from '../types';
 import type { GeneratedFile } from './types';
 import {
   getEmphasisStrategy,
@@ -11,6 +11,11 @@ import {
   getCardElevation,
   type EmphasisStrategy,
 } from './brandExpression';
+import {
+  getSectionEmphasisClasses,
+  getDataTableEmphasisClasses,
+  getFormEmphasisClasses,
+} from './visualEmphasis';
 
 // Reserved app routes that entity slugs cannot collide with
 // If an entity name matches one of these, its routes are prefixed with /e/
@@ -119,11 +124,16 @@ function generateEntityListPage(
   purpose: string,
   entity: OaxeOutput['entities'][0],
   appName: string,
-  brandDNA?: BrandDNA
+  brandDNA?: BrandDNA,
+  entityViewConfig?: EntityViewConfig
 ): string {
   const entityName = pascalCase(entity.name);
   const entityVar = camelCase(entity.name);
   const label = getEntityLabel(entity.name);
+
+  // M5B: Get view type from grammar or default to table
+  const viewType = entityViewConfig?.viewType || 'table';
+  const createPattern = entityViewConfig?.createPattern || 'page';
 
   // Brand expression: Get brand-aware copy
   const ctaLabel = brandDNA ? getCTALabel(entity.name, brandDNA) : `New ${entityName}`;
@@ -133,6 +143,35 @@ function generateEntityListPage(
   const emphasisStrategy = brandDNA ? getEmphasisStrategy(brandDNA) : 'balanced';
   const cardElevation = getCardElevation(emphasisStrategy, false);
 
+  // M5B: Generate different list pages based on view type
+  switch (viewType) {
+    case 'cards':
+      return generateCardsListPage(basePath, purpose, entity, entityName, entityVar, label, ctaLabel, emptyCopy, cardElevation, createPattern);
+    case 'kanban':
+      return generateKanbanListPage(basePath, purpose, entity, entityName, entityVar, label, ctaLabel, emptyCopy, createPattern);
+    case 'timeline':
+      return generateTimelineListPage(basePath, purpose, entity, entityName, entityVar, label, ctaLabel, emptyCopy, createPattern);
+    case 'feed':
+      return generateFeedListPage(basePath, purpose, entity, entityName, entityVar, label, ctaLabel, emptyCopy, createPattern);
+    case 'table':
+    default:
+      return generateTableListPage(basePath, purpose, entity, entityName, entityVar, label, ctaLabel, emptyCopy, cardElevation, createPattern);
+  }
+}
+
+// M5B: Table view (default)
+function generateTableListPage(
+  basePath: string,
+  purpose: string,
+  entity: OaxeOutput['entities'][0],
+  entityName: string,
+  entityVar: string,
+  label: string,
+  ctaLabel: string,
+  emptyCopy: { headline: string; subline: string },
+  cardElevation: string,
+  createPattern: 'page' | 'modal'
+): string {
   // Generate column definitions
   const columns = entity.fields.slice(0, 5).map(field => {
     const fieldName = camelCase(field.name);
@@ -140,11 +179,28 @@ function generateEntityListPage(
     return `    { key: '${fieldName}' as keyof ${entityName}, header: '${fieldLabel}' },`;
   }).join('\n');
 
+  const modalImport = createPattern === 'modal' ? ", Modal, EntityForm" : '';
+  const modalState = createPattern === 'modal' ? "\n  const [showCreate, setShowCreate] = useState(false);" : '';
+  const ctaAction = createPattern === 'modal'
+    ? "onClick={() => setShowCreate(true)}"
+    : `onClick={() => router.push('/${basePath}/new')}`;
+  const modalComponent = createPattern === 'modal' ? `
+
+      {/* Create Modal */}
+      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create ${entityName}">
+        <EntityForm
+          fields={[]}
+          onSubmit={async () => { setShowCreate(false); }}
+          onCancel={() => setShowCreate(false)}
+          submitLabel="${ctaLabel}"
+        />
+      </Modal>` : '';
+
   return `'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { DataTable, Card, Button } from '@/components';
+import { DataTable, Card, Button${modalImport} } from '@/components';
 import type { ${entityName} } from '@/lib/db';
 import { ${entityVar}Seed } from '@/lib/db/seed';
 
@@ -154,7 +210,7 @@ ${columns}
 
 export default function ${entityName}ListPage() {
   const router = useRouter();
-  const [data] = useState<${entityName}[]>(${entityVar}Seed);
+  const [data] = useState<${entityName}[]>(${entityVar}Seed);${modalState}
 
   return (
     <div className="space-y-6">
@@ -164,7 +220,7 @@ export default function ${entityName}ListPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-fg">${label}</h1>
           <p className="text-fg-secondary mt-1">${purpose.replace(/'/g, "\\'")}</p>
         </div>
-        <Button onClick={() => router.push('/${basePath}/new')}>
+        <Button ${ctaAction}>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
@@ -194,7 +250,365 @@ export default function ${entityName}ListPage() {
           onRowClick={(row) => router.push(\`/${basePath}/\${row.id}\`)}
           emptyMessage="${emptyCopy.headline}"
         />
-      </Card>
+      </Card>${modalComponent}
+    </div>
+  );
+}
+`;
+}
+
+// M5B: Cards view
+function generateCardsListPage(
+  basePath: string,
+  purpose: string,
+  entity: OaxeOutput['entities'][0],
+  entityName: string,
+  entityVar: string,
+  label: string,
+  ctaLabel: string,
+  emptyCopy: { headline: string; subline: string },
+  cardElevation: string,
+  createPattern: 'page' | 'modal'
+): string {
+  const primaryField = entity.fields[0]?.name ? camelCase(entity.fields[0].name) : 'id';
+  const secondaryField = entity.fields[1]?.name ? camelCase(entity.fields[1].name) : null;
+
+  const modalImport = createPattern === 'modal' ? ", Modal, EntityForm" : '';
+  const modalState = createPattern === 'modal' ? "\n  const [showCreate, setShowCreate] = useState(false);" : '';
+  const ctaAction = createPattern === 'modal'
+    ? "onClick={() => setShowCreate(true)}"
+    : `onClick={() => router.push('/${basePath}/new')}`;
+  const modalComponent = createPattern === 'modal' ? `
+
+      {/* Create Modal */}
+      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create ${entityName}">
+        <EntityForm
+          fields={[]}
+          onSubmit={async () => { setShowCreate(false); }}
+          onCancel={() => setShowCreate(false)}
+          submitLabel="${ctaLabel}"
+        />
+      </Modal>` : '';
+
+  return `'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { CardList, Button${modalImport} } from '@/components';
+import type { ${entityName} } from '@/lib/db';
+import { ${entityVar}Seed } from '@/lib/db/seed';
+
+export default function ${entityName}ListPage() {
+  const router = useRouter();
+  const [data] = useState<${entityName}[]>(${entityVar}Seed);${modalState}
+
+  // Transform data for CardList
+  const items = data.map(item => ({
+    id: item.id,
+    title: String(item.${primaryField} || item.id),
+    subtitle: ${secondaryField ? `String(item.${secondaryField} || '')` : "undefined"},
+  }));
+
+  return (
+    <div className="space-y-6">
+      {/* Page header */}
+      <div className="flex items-start justify-between pb-6 border-b border-border">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-fg">${label}</h1>
+          <p className="text-fg-secondary mt-1">${purpose.replace(/'/g, "\\'")}</p>
+        </div>
+        <Button ${ctaAction}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          ${ctaLabel}
+        </Button>
+      </div>
+
+      {/* Cards grid - M5B */}
+      <CardList
+        data={items}
+        onItemClick={(item) => router.push(\`/${basePath}/\${item.id}\`)}
+        emptyMessage="${emptyCopy.headline}"
+        columns={3}
+      />${modalComponent}
+    </div>
+  );
+}
+`;
+}
+
+// M5B: Kanban view
+function generateKanbanListPage(
+  basePath: string,
+  purpose: string,
+  entity: OaxeOutput['entities'][0],
+  entityName: string,
+  entityVar: string,
+  label: string,
+  ctaLabel: string,
+  emptyCopy: { headline: string; subline: string },
+  createPattern: 'page' | 'modal'
+): string {
+  // Find status field
+  const statusField = entity.fields.find(f =>
+    ['status', 'stage', 'state', 'phase'].some(p => f.name.toLowerCase().includes(p))
+  );
+  const statusFieldName = statusField ? camelCase(statusField.name) : 'status';
+  const titleField = entity.fields.find(f =>
+    ['name', 'title', 'label'].some(p => f.name.toLowerCase().includes(p))
+  ) || entity.fields[0];
+  const titleFieldName = titleField ? camelCase(titleField.name) : 'id';
+
+  const modalImport = createPattern === 'modal' ? ", Modal, EntityForm" : '';
+  const modalState = createPattern === 'modal' ? "\n  const [showCreate, setShowCreate] = useState(false);" : '';
+  const ctaAction = createPattern === 'modal'
+    ? "onClick={() => setShowCreate(true)}"
+    : `onClick={() => router.push('/${basePath}/new')}`;
+  const modalComponent = createPattern === 'modal' ? `
+
+      {/* Create Modal */}
+      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create ${entityName}">
+        <EntityForm
+          fields={[]}
+          onSubmit={async () => { setShowCreate(false); }}
+          onCancel={() => setShowCreate(false)}
+          submitLabel="${ctaLabel}"
+        />
+      </Modal>` : '';
+
+  return `'use client';
+
+import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { KanbanBoard, Button${modalImport} } from '@/components';
+import type { ${entityName} } from '@/lib/db';
+import { ${entityVar}Seed } from '@/lib/db/seed';
+
+// Define kanban columns based on status values
+const STATUSES = ['pending', 'in_progress', 'completed'];
+
+export default function ${entityName}ListPage() {
+  const router = useRouter();
+  const [data] = useState<${entityName}[]>(${entityVar}Seed);${modalState}
+
+  // Group items by status for kanban
+  const columns = useMemo(() => {
+    return STATUSES.map(status => ({
+      id: status,
+      title: status.replace('_', ' ').replace(/\\b\\w/g, l => l.toUpperCase()),
+      items: data
+        .filter(item => (item.${statusFieldName} as string || 'pending') === status)
+        .map(item => ({
+          id: item.id,
+          title: String(item.${titleFieldName} || item.id),
+          status: String(item.${statusFieldName} || 'pending'),
+        })),
+    }));
+  }, [data]);
+
+  return (
+    <div className="space-y-6">
+      {/* Page header */}
+      <div className="flex items-start justify-between pb-6 border-b border-border">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-fg">${label}</h1>
+          <p className="text-fg-secondary mt-1">${purpose.replace(/'/g, "\\'")}</p>
+        </div>
+        <Button ${ctaAction}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          ${ctaLabel}
+        </Button>
+      </div>
+
+      {/* Kanban board - M5B */}
+      <KanbanBoard
+        columns={columns}
+        onItemClick={(item) => router.push(\`/${basePath}/\${item.id}\`)}
+      />${modalComponent}
+    </div>
+  );
+}
+`;
+}
+
+// M5B: Timeline view
+function generateTimelineListPage(
+  basePath: string,
+  purpose: string,
+  entity: OaxeOutput['entities'][0],
+  entityName: string,
+  entityVar: string,
+  label: string,
+  ctaLabel: string,
+  emptyCopy: { headline: string; subline: string },
+  createPattern: 'page' | 'modal'
+): string {
+  // Find date and title fields
+  const dateField = entity.fields.find(f =>
+    ['date', 'time', 'created', 'timestamp'].some(p => f.name.toLowerCase().includes(p))
+  ) || entity.fields[0];
+  const dateFieldName = dateField ? camelCase(dateField.name) : 'createdAt';
+
+  const titleField = entity.fields.find(f =>
+    ['name', 'title', 'label', 'subject'].some(p => f.name.toLowerCase().includes(p))
+  ) || entity.fields[0];
+  const titleFieldName = titleField ? camelCase(titleField.name) : 'id';
+
+  const descField = entity.fields.find(f =>
+    ['description', 'content', 'body', 'note'].some(p => f.name.toLowerCase().includes(p))
+  );
+  const descFieldName = descField ? camelCase(descField.name) : null;
+
+  const modalImport = createPattern === 'modal' ? ", Modal, EntityForm" : '';
+  const modalState = createPattern === 'modal' ? "\n  const [showCreate, setShowCreate] = useState(false);" : '';
+  const ctaAction = createPattern === 'modal'
+    ? "onClick={() => setShowCreate(true)}"
+    : `onClick={() => router.push('/${basePath}/new')}`;
+  const modalComponent = createPattern === 'modal' ? `
+
+      {/* Create Modal */}
+      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create ${entityName}">
+        <EntityForm
+          fields={[]}
+          onSubmit={async () => { setShowCreate(false); }}
+          onCancel={() => setShowCreate(false)}
+          submitLabel="${ctaLabel}"
+        />
+      </Modal>` : '';
+
+  return `'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Timeline, Button${modalImport} } from '@/components';
+import type { ${entityName} } from '@/lib/db';
+import { ${entityVar}Seed } from '@/lib/db/seed';
+
+export default function ${entityName}ListPage() {
+  const router = useRouter();
+  const [data] = useState<${entityName}[]>(${entityVar}Seed);${modalState}
+
+  // Transform data for Timeline
+  const items = data.map(item => ({
+    id: item.id,
+    title: String(item.${titleFieldName} || item.id),
+    date: String(item.${dateFieldName} || new Date().toISOString().split('T')[0]),
+    ${descFieldName ? `description: String(item.${descFieldName} || ''),` : ''}
+  }));
+
+  return (
+    <div className="space-y-6">
+      {/* Page header */}
+      <div className="flex items-start justify-between pb-6 border-b border-border">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-fg">${label}</h1>
+          <p className="text-fg-secondary mt-1">${purpose.replace(/'/g, "\\'")}</p>
+        </div>
+        <Button ${ctaAction}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          ${ctaLabel}
+        </Button>
+      </div>
+
+      {/* Timeline - M5B */}
+      <Timeline
+        items={items}
+        onItemClick={(item) => router.push(\`/${basePath}/\${item.id}\`)}
+        emptyMessage="${emptyCopy.headline}"
+      />${modalComponent}
+    </div>
+  );
+}
+`;
+}
+
+// M5B: Feed view
+function generateFeedListPage(
+  basePath: string,
+  purpose: string,
+  entity: OaxeOutput['entities'][0],
+  entityName: string,
+  entityVar: string,
+  label: string,
+  ctaLabel: string,
+  emptyCopy: { headline: string; subline: string },
+  createPattern: 'page' | 'modal'
+): string {
+  // Find content and author fields
+  const contentField = entity.fields.find(f =>
+    ['content', 'body', 'message', 'text', 'post'].some(p => f.name.toLowerCase().includes(p))
+  ) || entity.fields[0];
+  const contentFieldName = contentField ? camelCase(contentField.name) : 'content';
+
+  const authorField = entity.fields.find(f =>
+    ['author', 'user', 'creator', 'name'].some(p => f.name.toLowerCase().includes(p))
+  );
+  const authorFieldName = authorField ? camelCase(authorField.name) : null;
+
+  const modalImport = createPattern === 'modal' ? ", Modal, EntityForm" : '';
+  const modalState = createPattern === 'modal' ? "\n  const [showCreate, setShowCreate] = useState(false);" : '';
+  const ctaAction = createPattern === 'modal'
+    ? "onClick={() => setShowCreate(true)}"
+    : `onClick={() => router.push('/${basePath}/new')}`;
+  const modalComponent = createPattern === 'modal' ? `
+
+      {/* Create Modal */}
+      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create ${entityName}">
+        <EntityForm
+          fields={[]}
+          onSubmit={async () => { setShowCreate(false); }}
+          onCancel={() => setShowCreate(false)}
+          submitLabel="${ctaLabel}"
+        />
+      </Modal>` : '';
+
+  return `'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Feed, Button${modalImport} } from '@/components';
+import type { ${entityName} } from '@/lib/db';
+import { ${entityVar}Seed } from '@/lib/db/seed';
+
+export default function ${entityName}ListPage() {
+  const router = useRouter();
+  const [data] = useState<${entityName}[]>(${entityVar}Seed);${modalState}
+
+  // Transform data for Feed
+  const items = data.map(item => ({
+    id: item.id,
+    content: String(item.${contentFieldName} || ''),
+    ${authorFieldName ? `author: String(item.${authorFieldName} || ''),` : ''}
+    timestamp: new Date().toLocaleDateString(),
+  }));
+
+  return (
+    <div className="space-y-6">
+      {/* Page header */}
+      <div className="flex items-start justify-between pb-6 border-b border-border">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-fg">${label}</h1>
+          <p className="text-fg-secondary mt-1">${purpose.replace(/'/g, "\\'")}</p>
+        </div>
+        <Button ${ctaAction}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          ${ctaLabel}
+        </Button>
+      </div>
+
+      {/* Feed - M5B */}
+      <Feed
+        items={items}
+        onItemClick={(item) => router.push(\`/${basePath}/\${item.id}\`)}
+        emptyMessage="${emptyCopy.headline}"
+      />${modalComponent}
     </div>
   );
 }
@@ -439,11 +853,20 @@ export default function ${titleCase}Page() {
 }
 
 /**
- * M5A: Generate pages with Brand DNA expression
+ * M5A/M5B: Generate pages with Brand DNA expression and Layout Grammar
  * Accepts optional BrandDNA for brand-aware copy and emphasis
+ * Accepts optional LayoutGrammar for entity view types and create patterns
  */
-export function generatePages(output: OaxeOutput, brandDNA?: BrandDNA): GeneratedFile[] {
+export function generatePages(output: OaxeOutput, brandDNA?: BrandDNA, layoutGrammar?: LayoutGrammar, visualEmphasis?: VisualEmphasis): GeneratedFile[] {
   const files: GeneratedFile[] = [];
+
+  // M5B: Build entity view config lookup
+  const entityViewLookup = new Map<string, EntityViewConfig>();
+  if (layoutGrammar?.entityViews) {
+    for (const ev of layoutGrammar.entityViews) {
+      entityViewLookup.set(ev.entityName.toLowerCase(), ev);
+    }
+  }
 
   // Track which entity index pages we've already generated
   const generatedEntityIndexPages = new Set<string>();
@@ -462,20 +885,26 @@ export function generatePages(output: OaxeOutput, brandDNA?: BrandDNA): Generate
       // Only generate entity index page if route is the base entity route (not a sub-route like [id])
       const isBaseEntityRoute = route === pageName;
 
+      // M5B: Get entity view config from grammar
+      const entityViewConfig = entityViewLookup.get(matchedEntity.name.toLowerCase());
+
       if (isBaseEntityRoute) {
         // Get collision-aware base path for this entity
         const basePath = getEntityBasePath(matchedEntity.name);
 
-        // Generate entity list page (M5A: with brand expression)
+        // Generate entity list page (M5A: with brand expression, M5B: with view type)
         const listPath = `src/app/(app)/${basePath}/page.tsx`;
-        const listContent = generateEntityListPage(basePath, page.purpose, matchedEntity, output.appName, brandDNA);
+        const listContent = generateEntityListPage(basePath, page.purpose, matchedEntity, output.appName, brandDNA, entityViewConfig);
         files.push({ path: listPath, content: listContent });
         generatedEntityIndexPages.add(matchedEntity.name.toLowerCase());
 
-        // Generate entity create form page (M5A: with brand expression)
-        const formPath = `src/app/(app)/${basePath}/new/page.tsx`;
-        const formContent = generateEntityFormPage(basePath, matchedEntity, brandDNA);
-        files.push({ path: formPath, content: formContent });
+        // M5B: Only generate /new page if createPattern is 'page'
+        if (!entityViewConfig || entityViewConfig.createPattern === 'page') {
+          // Generate entity create form page (M5A: with brand expression)
+          const formPath = `src/app/(app)/${basePath}/new/page.tsx`;
+          const formContent = generateEntityFormPage(basePath, matchedEntity, brandDNA);
+          files.push({ path: formPath, content: formContent });
+        }
 
         // Generate entity detail page (M5A: with brand expression)
         const detailPath = `src/app/(app)/${basePath}/[id]/page.tsx`;
@@ -514,21 +943,28 @@ export function generatePages(output: OaxeOutput, brandDNA?: BrandDNA): Generate
       // Get collision-aware base path for this entity
       const basePath = getEntityBasePath(entity.name);
 
-      // Generate missing entity index page (M5A: with brand expression)
+      // M5B: Get entity view config from grammar
+      const entityViewConfig = entityViewLookup.get(entitySlug);
+
+      // Generate missing entity index page (M5A: with brand expression, M5B: with view type)
       const listPath = `src/app/(app)/${basePath}/page.tsx`;
       const listContent = generateEntityListPage(
         basePath,
         `Manage ${entity.name}s`,
         entity,
         output.appName,
-        brandDNA
+        brandDNA,
+        entityViewConfig
       );
       files.push({ path: listPath, content: listContent });
 
-      // Generate create form page (M5A: with brand expression)
-      const formPath = `src/app/(app)/${basePath}/new/page.tsx`;
-      const formContent = generateEntityFormPage(basePath, entity, brandDNA);
-      files.push({ path: formPath, content: formContent });
+      // M5B: Only generate /new page if createPattern is 'page'
+      if (!entityViewConfig || entityViewConfig.createPattern === 'page') {
+        // Generate create form page (M5A: with brand expression)
+        const formPath = `src/app/(app)/${basePath}/new/page.tsx`;
+        const formContent = generateEntityFormPage(basePath, entity, brandDNA);
+        files.push({ path: formPath, content: formContent });
+      }
 
       // Generate detail page (M5A: with brand expression)
       const detailPath = `src/app/(app)/${basePath}/[id]/page.tsx`;

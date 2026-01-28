@@ -1,9 +1,11 @@
 import { generateProductSpec } from './llm';
-import { appendLog, updateRunStatus, getRun, setGeneratedApp, setBrandDNA, setLaunchAssets, setEvolution } from './runStore';
+import { appendLog, updateRunStatus, getRun, setGeneratedApp, setBrandDNA, setLaunchAssets, setEvolution, setLayoutGrammar, setVisualEmphasis } from './runStore';
 import { generateApp, getRelativeGeneratedPath } from './generators';
 import { generateBrandDNA } from './generators/brandDNA';
 import { generateVisualSignature, getVisualSignatureSummary } from './generators/visualSignature';
 import { generateIconography, getIconographySummary } from './generators/iconography';
+import { generateLayoutGrammar, generateLayoutGrammarMarkdown, getLayoutGrammarSummary } from './generators/layoutGrammar';
+import { generateVisualEmphasis, getVisualEmphasisSummary } from './generators/visualEmphasis';
 import { generateLaunchAssets, generateLaunchPlaybookMarkdown } from './generators/launchAssets';
 import { generateEvolutionRoadmap, generateEvolutionMarkdown } from './generators/evolution';
 import type { OaxeOutput } from './types';
@@ -49,10 +51,26 @@ export async function executePlan(runId: string): Promise<void> {
     await setBrandDNA(runId, brandDNA);
     await appendLog(runId, 'info', `Iconography generated: ${getIconographySummary(iconography)}`);
 
-    // Generate the app files (M5A: pass Brand DNA for UI expression)
+    // M5B: Generate Layout Grammar (after M4C, before app generation)
+    await appendLog(runId, 'info', 'M5B: Generating Layout Grammar...');
+    const layoutGrammar = generateLayoutGrammar(run.directive, output, brandDNA);
+    const grammarMarkdown = generateLayoutGrammarMarkdown(layoutGrammar, brandDNA);
+    await setLayoutGrammar(runId, layoutGrammar, grammarMarkdown);
+    await appendLog(runId, 'info', `Layout Grammar generated: ${getLayoutGrammarSummary(layoutGrammar)}`);
+    await appendLog(runId, 'info', 'Persisted to docs/layout-grammar.md');
+
+    // M5C: Generate Visual Emphasis (after M5B, before app generation)
+    await appendLog(runId, 'info', 'M5C: Generating Visual Emphasis...');
+    const visualEmphasis = generateVisualEmphasis(brandDNA, layoutGrammar);
+    await setVisualEmphasis(runId, visualEmphasis);
+    await appendLog(runId, 'info', `Visual Emphasis generated: ${getVisualEmphasisSummary(visualEmphasis)}`);
+
+    // Generate the app files (M5A: pass Brand DNA for UI expression, M5B: pass Layout Grammar, M5C: pass Visual Emphasis)
     await appendLog(runId, 'info', 'Generating Next.js app scaffold...');
     await appendLog(runId, 'info', 'M5A: Applying brand expression layer...');
-    const result = await generateApp(output, { force: true, directive: run.directive }, brandDNA);
+    await appendLog(runId, 'info', 'M5B: Applying layout grammar...');
+    await appendLog(runId, 'info', 'M5C: Applying visual emphasis...');
+    const result = await generateApp(output, { force: true, directive: run.directive }, brandDNA, layoutGrammar, visualEmphasis);
 
     await appendLog(runId, 'info', `Generated ${result.files.length} files`);
     await appendLog(runId, 'info', `Output path: ${getRelativeGeneratedPath(output.slug)}`);
