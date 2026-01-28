@@ -1,5 +1,16 @@
-import type { OaxeOutput } from '../types';
+import type { OaxeOutput, BrandDNA } from '../types';
 import type { GeneratedFile } from './types';
+import {
+  getEmphasisStrategy,
+  getEmptyStateCopy,
+  getCTALabel,
+  getFormHeader,
+  getNotFoundCopy,
+  getSubmitLabel,
+  getSecondaryVerb,
+  getCardElevation,
+  type EmphasisStrategy,
+} from './brandExpression';
 
 // Reserved app routes that entity slugs cannot collide with
 // If an entity name matches one of these, its routes are prefixed with /e/
@@ -32,6 +43,20 @@ function sanitizeRoute(route: string): string {
     .replace(/^\/+/, '')
     .replace(/[^a-zA-Z0-9/-]/g, '')
     .toLowerCase();
+}
+
+// Check if a route segment is a parameter (e.g., :id, [id], :param)
+// After sanitization, :id becomes id - we need to check original route
+function isParameterizedRoute(route: string): boolean {
+  // Check for common parameter patterns: :id, :param, [id], etc.
+  return /:\w+|[\[\]]/i.test(route);
+}
+
+// Check if a route's final segment is a parameter
+function endsWithParameter(route: string): boolean {
+  const segments = route.split('/');
+  const lastSegment = segments[segments.length - 1];
+  return /^:\w+$|^\[\w+\]$/.test(lastSegment);
 }
 
 function pascalCase(str: string): string {
@@ -93,11 +118,20 @@ function generateEntityListPage(
   basePath: string,
   purpose: string,
   entity: OaxeOutput['entities'][0],
-  appName: string
+  appName: string,
+  brandDNA?: BrandDNA
 ): string {
   const entityName = pascalCase(entity.name);
   const entityVar = camelCase(entity.name);
   const label = getEntityLabel(entity.name);
+
+  // Brand expression: Get brand-aware copy
+  const ctaLabel = brandDNA ? getCTALabel(entity.name, brandDNA) : `New ${entityName}`;
+  const emptyCopy = brandDNA
+    ? getEmptyStateCopy(entity.name, brandDNA)
+    : { headline: `No ${entityName.toLowerCase()}s found`, subline: '' };
+  const emphasisStrategy = brandDNA ? getEmphasisStrategy(brandDNA) : 'balanced';
+  const cardElevation = getCardElevation(emphasisStrategy, false);
 
   // Generate column definitions
   const columns = entity.fields.slice(0, 5).map(field => {
@@ -125,29 +159,29 @@ export default function ${entityName}ListPage() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div className="flex items-start justify-between pb-6 border-b border-[var(--border-default)]">
+      <div className="flex items-start justify-between pb-6 border-b border-border">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">${label}</h1>
-          <p className="text-[var(--text-secondary)] mt-1">${purpose.replace(/'/g, "\\'")}</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-fg">${label}</h1>
+          <p className="text-fg-secondary mt-1">${purpose.replace(/'/g, "\\'")}</p>
         </div>
         <Button onClick={() => router.push('/${basePath}/new')}>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          New ${entityName}
+          ${ctaLabel}
         </Button>
       </div>
 
       {/* Table card */}
-      <Card padding="none">
-        <div className="px-5 py-4 border-b border-[var(--border-subtle)]">
+      <Card padding="none"${cardElevation ? ` className="${cardElevation}"` : ''}>
+        <div className="px-5 py-4 border-b border-border-subtle">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-[var(--text-muted)]">
-              <span className="font-medium text-[var(--text-primary)]">{data.length}</span> ${entityName.toLowerCase()}s
+            <p className="text-sm text-fg-muted">
+              <span className="font-medium text-fg">{data.length}</span> ${entityName.toLowerCase()}s
             </p>
             <div className="flex items-center gap-2">
-              <button className="p-2 hover:bg-[var(--bg-hover)] rounded-lg transition-colors">
-                <svg className="w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+                <svg className="w-4 h-4 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
               </button>
@@ -158,7 +192,7 @@ export default function ${entityName}ListPage() {
           data={data}
           columns={columns}
           onRowClick={(row) => router.push(\`/${basePath}/\${row.id}\`)}
-          emptyMessage="No ${entityName.toLowerCase()}s found"
+          emptyMessage="${emptyCopy.headline}"
         />
       </Card>
     </div>
@@ -169,10 +203,22 @@ export default function ${entityName}ListPage() {
 
 function generateEntityFormPage(
   basePath: string,
-  entity: OaxeOutput['entities'][0]
+  entity: OaxeOutput['entities'][0],
+  brandDNA?: BrandDNA
 ): string {
   const entityName = pascalCase(entity.name);
   const label = getEntityLabel(entity.name);
+
+  // Brand expression: Get brand-aware copy
+  const formHeader = brandDNA
+    ? getFormHeader(entity.name, brandDNA)
+    : { title: `${entityName} Details`, description: `Fill in the information below to create a new ${entityName.toLowerCase()}` };
+  const submitLabel = brandDNA
+    ? getSubmitLabel(entity.name, brandDNA)
+    : `Create ${entityName}`;
+  const pageTitle = brandDNA
+    ? getFormHeader(entity.name, brandDNA).title
+    : `Create ${entityName}`;
 
   // Generate field configurations
   const fieldConfigs = entity.fields.map(field => {
@@ -217,14 +263,14 @@ export default function Create${entityName}Page() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Page header */}
-      <div className="flex items-center justify-between pb-6 border-b border-[var(--border-default)]">
+      <div className="flex items-center justify-between pb-6 border-b border-border">
         <div>
-          <nav className="text-sm text-[var(--text-muted)] mb-1">
-            <a href="/${basePath}" className="hover:text-[var(--text-primary)] transition-colors">${label}</a>
+          <nav className="text-sm text-fg-muted mb-1">
+            <a href="/${basePath}" className="hover:text-fg transition-colors">${label}</a>
             <span className="mx-2">/</span>
             <span>New</span>
           </nav>
-          <h1 className="text-2xl font-semibold tracking-tight">Create ${entityName}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-fg">${pageTitle}</h1>
         </div>
         <Button variant="ghost" onClick={() => router.back()}>
           Cancel
@@ -234,15 +280,15 @@ export default function Create${entityName}Page() {
       {/* Form card */}
       <Card padding="lg">
         <CardHeader
-          title="${entityName} Details"
-          description="Fill in the information below to create a new ${entityName.toLowerCase()}"
+          title="${formHeader.title}"
+          description="${formHeader.description}"
         />
         <EntityForm
           fields={fields}
           schema={${entityName}Schema}
           onSubmit={handleSubmit}
           onCancel={() => router.back()}
-          submitLabel="Create ${entityName}"
+          submitLabel="${submitLabel}"
         />
       </Card>
     </div>
@@ -253,19 +299,29 @@ export default function Create${entityName}Page() {
 
 function generateEntityDetailPage(
   basePath: string,
-  entity: OaxeOutput['entities'][0]
+  entity: OaxeOutput['entities'][0],
+  brandDNA?: BrandDNA
 ): string {
   const entityName = pascalCase(entity.name);
   const entityVar = camelCase(entity.name);
   const label = getEntityLabel(entity.name);
 
+  // Brand expression: Get brand-aware copy
+  const notFoundCopy = brandDNA
+    ? getNotFoundCopy(entity.name, brandDNA)
+    : { headline: `${entityName} not found`, subline: 'The requested item could not be found' };
+  const secondaryVerb = brandDNA ? getSecondaryVerb(brandDNA) : 'View';
+  const detailsTitle = brandDNA?.mood === 'minimal'
+    ? entityName
+    : `${entityName} Information`;
+
   // Generate field display rows
   const fieldRows = entity.fields.map(field => {
     const fieldName = camelCase(field.name);
     const fieldLabel = field.name.charAt(0).toUpperCase() + field.name.slice(1).replace(/([A-Z])/g, ' $1');
-    return `          <div className="py-4 border-b border-[var(--border-subtle)] last:border-0">
-            <dt className="text-sm font-medium text-[var(--text-muted)]">${fieldLabel}</dt>
-            <dd className="mt-1 text-[var(--text-primary)]">{String(item.${fieldName})}</dd>
+    return `          <div className="py-4 border-b border-border-subtle last:border-0">
+            <dt className="text-sm font-medium text-fg-muted">${fieldLabel}</dt>
+            <dd className="mt-1 text-fg">{String(item.${fieldName})}</dd>
           </div>`;
   }).join('\n');
 
@@ -286,13 +342,13 @@ export default function ${entityName}DetailPage() {
   if (!item) {
     return (
       <div className="text-center py-16">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center">
-          <svg className="w-8 h-8 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+          <svg className="w-8 h-8 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <p className="text-[var(--text-secondary)] font-medium">${entityName} not found</p>
-        <p className="text-sm text-[var(--text-muted)] mt-1">The requested item could not be found</p>
+        <p className="text-fg-secondary font-medium">${notFoundCopy.headline}</p>
+        <p className="text-sm text-fg-muted mt-1">${notFoundCopy.subline}</p>
         <Button onClick={() => router.push('/${basePath}')} className="mt-6">
           Back to ${label}
         </Button>
@@ -303,14 +359,14 @@ export default function ${entityName}DetailPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Page header */}
-      <div className="flex items-center justify-between pb-6 border-b border-[var(--border-default)]">
+      <div className="flex items-center justify-between pb-6 border-b border-border">
         <div>
-          <nav className="text-sm text-[var(--text-muted)] mb-1">
-            <a href="/${basePath}" className="hover:text-[var(--text-primary)] transition-colors">${label}</a>
+          <nav className="text-sm text-fg-muted mb-1">
+            <a href="/${basePath}" className="hover:text-fg transition-colors">${label}</a>
             <span className="mx-2">/</span>
             <span>{id}</span>
           </nav>
-          <h1 className="text-2xl font-semibold tracking-tight">${entityName} Details</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-fg">${entityName} Details</h1>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => router.push('/${basePath}')}>
@@ -330,7 +386,7 @@ export default function ${entityName}DetailPage() {
 
       {/* Details card */}
       <Card padding="lg">
-        <CardHeader title="${entityName} Information" />
+        <CardHeader title="${detailsTitle}" />
         <dl>
 ${fieldRows}
         </dl>
@@ -355,9 +411,9 @@ export default function ${titleCase}Page() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div className="pb-6 border-b border-[var(--border-default)]">
-        <h1 className="text-2xl font-semibold tracking-tight">${titleCase}</h1>
-        <p className="text-[var(--text-secondary)] mt-1">${purpose.replace(/'/g, "\\'")}</p>
+      <div className="pb-6 border-b border-border">
+        <h1 className="text-2xl font-semibold tracking-tight text-fg">${titleCase}</h1>
+        <p className="text-fg-secondary mt-1">${purpose.replace(/'/g, "\\'")}</p>
       </div>
 
       <Card padding="lg">
@@ -366,12 +422,12 @@ export default function ${titleCase}Page() {
           description="This page is ready for implementation"
         />
         <div className="space-y-4">
-          <p className="text-[var(--text-secondary)]">
+          <p className="text-fg-secondary">
             This is the ${titleCase.toLowerCase()} page. Add your content and functionality here.
           </p>
-          <div className="p-4 bg-[var(--bg-tertiary)] rounded-lg border border-[var(--border-subtle)]">
-            <p className="text-sm text-[var(--text-muted)]">
-              <span className="font-medium text-[var(--text-secondary)]">Purpose:</span> ${purpose.replace(/'/g, "\\'")}
+          <div className="p-4 bg-muted rounded-lg border border-border-subtle">
+            <p className="text-sm text-fg-muted">
+              <span className="font-medium text-fg-secondary">Purpose:</span> ${purpose.replace(/'/g, "\\'")}
             </p>
           </div>
         </div>
@@ -382,7 +438,11 @@ export default function ${titleCase}Page() {
 `;
 }
 
-export function generatePages(output: OaxeOutput): GeneratedFile[] {
+/**
+ * M5A: Generate pages with Brand DNA expression
+ * Accepts optional BrandDNA for brand-aware copy and emphasis
+ */
+export function generatePages(output: OaxeOutput, brandDNA?: BrandDNA): GeneratedFile[] {
   const files: GeneratedFile[] = [];
 
   // Track which entity index pages we've already generated
@@ -406,23 +466,33 @@ export function generatePages(output: OaxeOutput): GeneratedFile[] {
         // Get collision-aware base path for this entity
         const basePath = getEntityBasePath(matchedEntity.name);
 
-        // Generate entity list page
+        // Generate entity list page (M5A: with brand expression)
         const listPath = `src/app/(app)/${basePath}/page.tsx`;
-        const listContent = generateEntityListPage(basePath, page.purpose, matchedEntity, output.appName);
+        const listContent = generateEntityListPage(basePath, page.purpose, matchedEntity, output.appName, brandDNA);
         files.push({ path: listPath, content: listContent });
         generatedEntityIndexPages.add(matchedEntity.name.toLowerCase());
 
-        // Generate entity create form page
+        // Generate entity create form page (M5A: with brand expression)
         const formPath = `src/app/(app)/${basePath}/new/page.tsx`;
-        const formContent = generateEntityFormPage(basePath, matchedEntity);
+        const formContent = generateEntityFormPage(basePath, matchedEntity, brandDNA);
         files.push({ path: formPath, content: formContent });
 
-        // Generate entity detail page
+        // Generate entity detail page (M5A: with brand expression)
         const detailPath = `src/app/(app)/${basePath}/[id]/page.tsx`;
-        const detailContent = generateEntityDetailPage(basePath, matchedEntity);
+        const detailContent = generateEntityDetailPage(basePath, matchedEntity, brandDNA);
         files.push({ path: detailPath, content: detailContent });
       } else {
-        // This is a sub-route (like /job/[id]), generate it as specified
+        // This is a sub-route (like /cases/:id)
+        // M9 FIX: Skip parameterized routes (e.g., /cases/:id) - entity detail pages already handle these
+        // The original route contains :id or [id] patterns, but sanitizeRoute strips the `:` making it "cases/id"
+        // We should NOT generate a literal "id" folder page - the [id] dynamic route handles this
+        const originalRouteIsParameterized = endsWithParameter(page.route);
+        if (originalRouteIsParameterized) {
+          // Skip - entity detail page is already generated at [id]/page.tsx
+          continue;
+        }
+
+        // Only generate simple page for non-parameterized sub-routes
         const filePath = `src/app/(app)/${route}/page.tsx`;
         const content = generateSimplePage(route, page.purpose, output.appName);
         files.push({ path: filePath, content });
@@ -444,24 +514,25 @@ export function generatePages(output: OaxeOutput): GeneratedFile[] {
       // Get collision-aware base path for this entity
       const basePath = getEntityBasePath(entity.name);
 
-      // Generate missing entity index page
+      // Generate missing entity index page (M5A: with brand expression)
       const listPath = `src/app/(app)/${basePath}/page.tsx`;
       const listContent = generateEntityListPage(
         basePath,
         `Manage ${entity.name}s`,
         entity,
-        output.appName
+        output.appName,
+        brandDNA
       );
       files.push({ path: listPath, content: listContent });
 
-      // Generate create form page
+      // Generate create form page (M5A: with brand expression)
       const formPath = `src/app/(app)/${basePath}/new/page.tsx`;
-      const formContent = generateEntityFormPage(basePath, entity);
+      const formContent = generateEntityFormPage(basePath, entity, brandDNA);
       files.push({ path: formPath, content: formContent });
 
-      // Generate detail page
+      // Generate detail page (M5A: with brand expression)
       const detailPath = `src/app/(app)/${basePath}/[id]/page.tsx`;
-      const detailContent = generateEntityDetailPage(basePath, entity);
+      const detailContent = generateEntityDetailPage(basePath, entity, brandDNA);
       files.push({ path: detailPath, content: detailContent });
 
       generatedEntityIndexPages.add(entitySlug);

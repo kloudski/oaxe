@@ -1,9 +1,11 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import type { Run, LogEntry, GeneratedApp } from './types';
+import type { Run, LogEntry, GeneratedApp, BrandDNA, LaunchAssets, EvolutionRoadmap } from './types';
 import { generateRunFilename } from './slug';
 
 const DATA_DIR = path.join(process.cwd(), 'data', 'runs');
+const BRAND_DIR = path.join(process.cwd(), 'brand');
+const DOCS_DIR = path.join(process.cwd(), 'docs');
 
 async function ensureDataDir(): Promise<void> {
   await fs.mkdir(DATA_DIR, { recursive: true });
@@ -127,4 +129,129 @@ export async function setGeneratedApp(id: string, generatedApp: GeneratedApp): P
 
   run.generatedApp = generatedApp;
   await saveRun(run);
+}
+
+/**
+ * M4A: Set Brand DNA for a run
+ * - Embeds in run.brandDNA
+ * - Also persists to brand/dna.json (repo-level latest)
+ */
+export async function setBrandDNA(id: string, brandDNA: BrandDNA): Promise<void> {
+  const run = await getRun(id);
+  if (!run) return;
+
+  // Embed in run
+  run.brandDNA = brandDNA;
+  await saveRun(run);
+
+  // Also persist to brand/dna.json (repo-level latest)
+  await saveBrandDNA(brandDNA);
+}
+
+/**
+ * M4A: Save Brand DNA to brand/dna.json
+ */
+async function saveBrandDNA(brandDNA: BrandDNA): Promise<void> {
+  await fs.mkdir(BRAND_DIR, { recursive: true });
+  const filepath = path.join(BRAND_DIR, 'dna.json');
+  await fs.writeFile(filepath, JSON.stringify(brandDNA, null, 2), 'utf-8');
+}
+
+/**
+ * M4A: Get latest Brand DNA from brand/dna.json
+ */
+export async function getLatestBrandDNA(): Promise<BrandDNA | null> {
+  try {
+    const filepath = path.join(BRAND_DIR, 'dna.json');
+    const content = await fs.readFile(filepath, 'utf-8');
+    return JSON.parse(content) as BrandDNA;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * M6: Set Launch Assets for a run
+ * - Embeds in run.launchAssets
+ * - Also persists to docs/launch-playbook.md
+ */
+export async function setLaunchAssets(
+  id: string,
+  launchAssets: LaunchAssets,
+  playbookMarkdown: string
+): Promise<void> {
+  const run = await getRun(id);
+  if (!run) return;
+
+  // Embed in run
+  run.launchAssets = launchAssets;
+  await saveRun(run);
+
+  // Also persist to docs/launch-playbook.md
+  await saveLaunchPlaybook(playbookMarkdown);
+}
+
+/**
+ * M6: Save launch playbook to docs/launch-playbook.md
+ */
+async function saveLaunchPlaybook(content: string): Promise<void> {
+  await fs.mkdir(DOCS_DIR, { recursive: true });
+  const filepath = path.join(DOCS_DIR, 'launch-playbook.md');
+  await fs.writeFile(filepath, content, 'utf-8');
+}
+
+/**
+ * M6: Get latest launch assets from a completed run
+ */
+export async function getLatestLaunchAssets(): Promise<LaunchAssets | null> {
+  const runs = await listRuns();
+  for (const run of runs) {
+    if (run.launchAssets) {
+      return run.launchAssets;
+    }
+  }
+  return null;
+}
+
+/**
+ * M8: Set Evolution Roadmap for a run
+ * - Embeds in run.evolution
+ * - Also persists to docs/evolution.md
+ */
+export async function setEvolution(
+  id: string,
+  evolution: EvolutionRoadmap,
+  evolutionMarkdown: string
+): Promise<void> {
+  const run = await getRun(id);
+  if (!run) return;
+
+  // Embed in run
+  run.evolution = evolution;
+  await saveRun(run);
+
+  // Also persist to docs/evolution.md
+  await saveEvolutionMarkdown(evolutionMarkdown);
+}
+
+/**
+ * M8: Save evolution roadmap to docs/evolution.md
+ */
+async function saveEvolutionMarkdown(content: string): Promise<void> {
+  await fs.mkdir(DOCS_DIR, { recursive: true });
+  const filepath = path.join(DOCS_DIR, 'evolution.md');
+  await fs.writeFile(filepath, content, 'utf-8');
+}
+
+/**
+ * M8: Get latest evolution roadmap from a completed run
+ */
+export async function getLatestEvolution(): Promise<EvolutionRoadmap | null> {
+  const runs = await listRuns();
+  for (const run of runs) {
+    if (run.evolution) {
+      return run.evolution;
+    }
+  }
+  return null;
 }

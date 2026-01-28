@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import type { OaxeOutput } from '../types';
+import type { OaxeOutput, BrandDNA } from '../types';
 import type { GenerationResult, FileTreeNode, GeneratedFile, GeneratorOptions } from './types';
 import { generateScaffold } from './scaffold';
 import { generatePages, getEntityBasePath } from './pages';
@@ -8,8 +8,22 @@ import { generateApis } from './apis';
 import { generateSchema } from './schema';
 import { generateSeed } from './seed';
 import { generateComponents } from './components';
+import { generateTokens, getTokensForRunMetadata, extractBrandDNAForTokens, shouldUseBrandDNAOverride } from './tokens';
+import { generateBrandDNA, getBrandDNAAsJSON } from './brandDNA';
+import { generateLaunchAssets, generateLaunchPlaybookMarkdown } from './launchAssets';
 
 export * from './types';
+export { getTokensForRunMetadata, extractBrandDNAForTokens, shouldUseBrandDNAOverride };
+export { generateBrandDNA, getBrandDNAAsJSON };
+
+// M5A: Export brand expression utilities
+export * from './brandExpression';
+
+// M6: Export launch assets generator
+export { generateLaunchAssets, generateLaunchPlaybookMarkdown };
+
+// M8: Export evolution roadmap generator
+export { generateEvolutionRoadmap, generateEvolutionMarkdown } from './evolution';
 
 const GENERATED_DIR = path.join(process.cwd(), 'generated');
 
@@ -67,11 +81,16 @@ function buildFileTree(files: GeneratedFile[]): FileTreeNode {
   return root;
 }
 
+/**
+ * M5A: Generate app with Brand DNA expression
+ * Accepts optional BrandDNA for brand-aware copy, emphasis, and moments
+ */
 export async function generateApp(
   output: OaxeOutput,
-  options: GeneratorOptions = {}
+  options: GeneratorOptions = {},
+  brandDNA?: BrandDNA
 ): Promise<GenerationResult> {
-  const { dryRun = false, force = false } = options;
+  const { dryRun = false, force = false, directive = '' } = options;
   const slug = sanitizeSlug(output.slug);
   const outputPath = path.join(GENERATED_DIR, slug);
 
@@ -90,10 +109,13 @@ export async function generateApp(
   }
 
   // Collect all generated files
+  // Pass directive for brand-driven token generation (M3B)
+  // M5A: Pass Brand DNA for UI expression
   const files: GeneratedFile[] = [
-    ...generateScaffold(output),
+    ...generateScaffold(output, directive, brandDNA),    // M5A: Dashboard personality
+    ...generateTokens(output, directive),                 // Brand-driven OKLCH tokens
     ...generateComponents(output),
-    ...generatePages(output),
+    ...generatePages(output, brandDNA),                   // M5A: Brand-aware copy
     ...generateApis(output),
     ...generateSchema(output),
     ...generateSeed(output),
@@ -145,9 +167,9 @@ export default function ${titleCase}Page() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div className="pb-6 border-b border-[var(--border-default)]">
-        <h1 className="text-2xl font-semibold tracking-tight">${titleCase}</h1>
-        <p className="text-[var(--text-secondary)] mt-1">Manage ${titleCase.toLowerCase()} data</p>
+      <div className="pb-6 border-b border-border">
+        <h1 className="text-2xl font-semibold tracking-tight text-fg">${titleCase}</h1>
+        <p className="text-fg-secondary mt-1">Manage ${titleCase.toLowerCase()} data</p>
       </div>
 
       <Card padding="lg">
@@ -155,8 +177,8 @@ export default function ${titleCase}Page() {
           title="${titleCase}"
           description="This page is ready for implementation"
         />
-        <div className="p-4 bg-[var(--bg-tertiary)] rounded-lg border border-[var(--border-subtle)]">
-          <p className="text-sm text-[var(--text-muted)]">
+        <div className="p-4 bg-muted rounded-lg border border-border-subtle">
+          <p className="text-sm text-fg-muted">
             Content for ${titleCase.toLowerCase()} will appear here.
           </p>
         </div>
