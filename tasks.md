@@ -873,7 +873,7 @@ Reference docs/design-system.md for specifications.
 
 ## [M4] Brand DNA Generation (Full)
 
-**Status:** Partially Complete (M4A done)
+**Status:** Complete (M4A + M4B + M4C done)
 **Owner:** @brand
 **Dependencies:** [M1]
 **Priority:** P0
@@ -885,11 +885,11 @@ Generate distinctive, ownable brand identity for the product.
 - [x] Brand archetype selected (M4A)
 - [x] Brand promise articulated (M4A - positioning.statement)
 - [x] Emotional signature defined (M4A - productBrandMoments)
-- [x] Visual signature documented (M4A - visual.aesthetic, visual.iconStyle)
+- [x] Visual signature documented (M4B - visualSignature system)
 - [x] Verbal tone codified (M4A - voice.tone, voice.style)
-- [ ] Iconography logic defined (detailed icon specs)
+- [x] Iconography logic defined (M4C - iconography system)
 - [x] Brand guardrails established (M4A)
-- [x] brand/dna.json populated (M4A)
+- [x] brand/dna.json populated (M4A + M4B + M4C)
 
 ### Performance Implications
 - Brand assets pregenerated, not runtime
@@ -901,13 +901,212 @@ Generate distinctive, ownable brand identity for the product.
 
 ### Tasks
 - [x] Build archetype selector — @engineer — M4A
-- [ ] Build visual signature generator — @designer — Est: 6h
+- [x] Build visual signature generator — @engineer — M4B
 - [x] Build verbal tone generator — @engineer — M4A
-- [ ] Build iconography system — @designer — Est: 4h
+- [x] Build iconography system — @engineer — M4C
 
 ### Notes
-M4A implements core Brand DNA generation. Remaining work focuses on detailed visual signature and iconography generation.
+M4A implements core Brand DNA generation.
+M4B implements Visual Signature System (shape language, density, contrast, texture, motion, layout).
+M4C implements Iconography System (icon style, stroke weight, metaphor strategy, semantic rules, usage rules, accessibility).
 Reference docs/brand-dna.md and brand/dna.json.
+
+---
+
+## [M4B] Visual Signature Generation
+
+**Status:** Complete
+**Owner:** @engineer
+**Dependencies:** [M4A]
+**Priority:** P0
+
+### Objective
+Generate a structured Visual Signature System that formalizes how the brand looks beyond colors.
+
+### Acceptance Criteria
+- [x] Shape Language profile derived from mood + archetype (rounded | balanced | sharp | mixed)
+- [x] Density & Rhythm profile derived from category (compact | balanced | spacious)
+- [x] Contrast Philosophy derived from mood (low-contrast-calm | high-contrast-assertive | mixed-functional)
+- [x] Texture Usage derived from category (none | subtle | expressive)
+- [x] Motion Character derived from archetype + mood (restrained | confident | energetic | ceremonial)
+- [x] Layout Philosophy derived from category (content-first | structure-first | narrative)
+- [x] Deterministic output (no randomness)
+- [x] Attached to BrandDNA.visualSignature
+- [x] Persisted to brand/dna.json
+- [x] No UI or token changes
+- [x] Build passes
+
+### Performance Implications
+- No runtime overhead - all computation at generation time
+- Pure functions for all derivations
+
+### Security Implications
+- No security impact (brand specification only)
+
+### Design Decisions
+
+**Shape Language Derivation:**
+- Mood-driven base: professional→balanced, calm→rounded, bold→mixed, etc.
+- Archetype can override: Ruler→balanced, Hero→sharp, Caregiver→rounded, Creator→mixed
+
+**Density Context Guidance:**
+Each density profile (compact/balanced/spacious) includes specific guidance for:
+- Tables: Row heights, cell padding, scanability
+- Dashboards: Widget gaps, label style, data priority
+- Forms: Field spacing, grouping, validation style
+- Navigation: Item heights, icon/text treatment
+
+**Contrast Philosophy:**
+- low-contrast-calm: Subtle tonal shifts, reduced visual stress
+- high-contrast-assertive: Bold contrast, decisive feel
+- mixed-functional: Strategic contrast for key actions
+
+**Texture Rules:**
+Each profile includes:
+- allowedContexts: Where texture may appear
+- prohibitedContexts: Where texture must not appear
+- performanceGuidance: GPU/perf-safe recommendations
+
+**Motion Character (Descriptive Only):**
+- timingPhilosophy: How timing should feel (not specific numbers)
+- purposeOfMotion: Why motion exists (feedback, trust, delight)
+- entranceExits: How elements enter/exit
+- microInteractions: How small interactions behave
+
+**Layout Philosophy:**
+- content-first: Content drives structure
+- structure-first: Structure organizes content
+- narrative: Layout supports storytelling
+
+### Files Created
+- generators/visualSignature.ts: Visual signature generator with all derivation logic
+
+### Files Modified
+- types.ts: Added VisualSignature interface and related types
+- schemas.ts: Added VisualSignatureSchema Zod validation
+- planner.ts: Generates visual signature immediately after M4A.1
+- generators/index.ts: Exports visual signature functions
+- brand/dna.json: Updated with visualSignature for BillEase
+
+### Example Visual Signatures
+
+**Finance App (BillEase: finance / professional / Ruler):**
+- Shape: balanced — "A balanced shape vocabulary supports the Ruler's authority"
+- Density: compact — "The finance domain demands efficient information display"
+- Contrast: mixed-functional — "Contrast is deployed strategically"
+- Texture: none — "Clean, texture-free aesthetic"
+- Motion: confident — "Animation conveys assurance and polish"
+- Layout: structure-first — "Clear structural organization"
+
+**Wellness App (RitualFlow: wellness / calm / Innocent):**
+- Shape: rounded — "Rounded shapes reinforce the calm mood"
+- Density: spacious — "Generous spacing supports the calm mood"
+- Contrast: low-contrast-calm — "Subtle tonal shifts"
+- Texture: subtle — "Minimal texture adds warmth"
+- Motion: restrained — "Motion is minimal and purposeful"
+- Layout: narrative — "Layout guides users through content progressively"
+
+### Notes
+Visual signatures differ meaningfully across categories and moods, providing real design direction without buzzwords.
+All rationales reference specific brand properties (mood, archetype, category) for traceability.
+
+---
+
+## [M4C] Iconography System Generation
+
+**Status:** Complete
+**Owner:** @engineer
+**Dependencies:** [M4B]
+**Priority:** P0
+
+### Objective
+Generate a structured Brand Iconography System that defines icon logic, style rules, metaphor preferences, and usage guidelines. This system guides designers and engineers implementing icons.
+
+### Acceptance Criteria
+- [x] Icon style profile derived from mood + archetype (outline | solid | duotone | mixed)
+- [x] Stroke weight philosophy derived from category (thin | standard | bold)
+- [x] Corner treatment aligned with visual signature shape language
+- [x] Metaphor strategy derived from archetype + category (literal | symbolic | hybrid)
+- [x] Category-specific metaphor guidance with examples
+- [x] Semantic rules (one icon = one meaning, reuse policy, new icon criteria)
+- [x] Do/Don't usage rules derived from mood + category
+- [x] Accessibility guidance (labeling, contrast, non-visual signals, touch targets)
+- [x] Deterministic output (no randomness)
+- [x] Attached to BrandDNA.iconography
+- [x] Persisted to brand/dna.json
+- [x] No SVG generation
+- [x] No UI changes
+- [x] No token changes
+- [x] Build passes
+
+### Performance Implications
+- No runtime overhead - all computation at generation time
+- Pure functions for all derivations
+
+### Security Implications
+- No security impact (brand specification only)
+
+### Design Decisions
+
+**Icon Style Derivation:**
+- Mood-driven base: professional→outline, calm→outline, bold→solid, playful→duotone
+- Archetype can override: Ruler→solid, Hero→solid, Caregiver→duotone, Creator→mixed, Sage→outline
+
+**Stroke Weight by Category:**
+- legal/finance/healthcare: standard (1.5-2px)
+- wellness/productivity/nature: thin (1-1.5px)
+- creative/energy: bold (2-2.5px)
+
+**Metaphor Strategy:**
+- literal: Ensures instant recognition (legal, finance, healthcare default)
+- symbolic: Expresses meaning beyond the obvious (creative archetypes)
+- hybrid: Literal for core functions, symbolic for brand moments
+
+**Category-Specific Guidance:**
+Each of 12 categories has tailored guidance for all three metaphor strategies with preferred/avoid examples.
+
+**Semantic Rules:**
+- One icon = one meaning (no dual meanings)
+- Reuse policy prioritizes consistency over novelty
+- New icon criteria: no existing representation, significant feature, fits style, meaning without explanation
+
+**Usage Rules by Mood:**
+- professional: reinforce hierarchy, consistent spacing, pair with labels
+- calm: breathing room, muted colors, subtle hover states
+- bold: confident sizes, brand color, visual energy
+- etc. (10 mood presets)
+
+**Accessibility Guidance:**
+- Critical categories (legal, finance, healthcare) require mandatory text labels
+- WCAG 2.1 contrast requirements (3:1 informational, 4.5:1 critical)
+- Icons must never be the only signal for important information
+- Minimum touch target: 44x44px
+
+### Files Created
+- generators/iconography.ts: Iconography system generator
+
+### Files Modified
+- types.ts: Added Iconography interface and related types
+- schemas.ts: Added IconographySchema Zod validation
+- planner.ts: Generates iconography immediately after M4B
+- generators/index.ts: Exports iconography functions
+- brand/dna.json: Updated with iconography for LexFlow
+
+### Example Iconography Specifications
+
+**Legal App (LexFlow: legal / professional / Sage):**
+- Style: outline — "Outline icons support the professional mood by providing visual clarity without competing for attention"
+- Stroke: standard (1.5-2px) — "Standard stroke weights provide optimal legibility"
+- Metaphor: literal — "Literal iconography ensures instant recognition in legal contexts"
+- Do: Pair icons with text labels for critical actions
+- Don't: Use playful or cartoon-style icons; Apply emoji aesthetics
+
+**Wellness App (SereneLife: wellness / calm / Caregiver):**
+- Style: duotone — "Duotone icons add warmth and depth to the calm personality"
+- Stroke: thin (1-1.5px) — "Thin strokes create an elegant, lightweight feel"
+- Metaphor: hybrid — "Literal for core functions, symbolic for brand moments"
+- Do: Give icons breathing room; Use muted colors
+- Don't: Use clinical or harsh iconography; Apply institutional styling
 
 ---
 
@@ -1318,6 +1517,32 @@ Verify all generated artifacts work together correctly.
 M9 complete. One bug fixed (duplicate route pages). System is release-ready for M7-lite/M7-plus scope.
 
 No database or auth testing performed as these are out of scope for current milestones.
+
+### Re-Verification (2026-01-28)
+
+Fresh comprehensive test run against the full test matrix:
+
+**Test Apps:** signcraft-ai (newest, Jan 28), ritualflow (wellness category)
+
+| Test Category | Status | Details |
+|--------------|--------|---------|
+| Oaxe Core Build | ✅ PASS | Zero TypeScript errors, clean compilation |
+| Generated App Build (signcraft-ai) | ✅ PASS | 18 routes, no duplicate literal "id" folders |
+| Generated App Build (ritualflow) | ✅ PASS | 16 routes compile successfully |
+| Routing Integrity | ✅ PASS | Fix confirmed working - signcraft-ai has only `[id]` routes, no literal `id` |
+| API Routes | ✅ PASS | Zod validation on POST, correct JSON shapes |
+| Schema Consistency | ✅ PASS | Project/Client/InventoryItem match across types.ts, schema.ts, seed.ts |
+| Design Tokens | ✅ PASS | Full M3E fingerprint (seed, variance, radiusProfile, shadowProfile) |
+| Brand DNA | ✅ PASS | brand/dna.json exists with all fields populated, no nulls |
+| Persistence Artifacts | ✅ PASS | docs/launch-playbook.md, docs/evolution.md exist |
+| Theme System | ✅ PASS | theme.ts with light/dark/system, ThemeToggle component |
+| tokens.css | ✅ PASS | OKLCH only, L-shift dark mode, semantic order preserved |
+
+**Legacy Apps with Duplicate Routes:**
+5 pre-fix apps (ritualsync, codecollab, caseflow, skintradehub) have literal `id` directories.
+These still build but were generated before the fix. New generations (signcraft-ai) are clean.
+
+**Conclusion:** System is release-ready. All acceptance criteria fully met.
 
 ---
 

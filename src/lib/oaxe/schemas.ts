@@ -1,6 +1,113 @@
 import { z } from 'zod';
 
 /**
+ * M4B: Visual Signature Schema
+ * Formalizes how the brand looks beyond colors
+ */
+export const VisualSignatureSchema = z.object({
+  shapeLanguage: z.object({
+    profile: z.enum(['rounded', 'balanced', 'sharp', 'mixed']).describe('Shape language profile'),
+    rationale: z.string().describe('Why this shape language fits the brand'),
+    cornerRadiusGuidance: z.string().describe('Specific corner radius guidance'),
+    iconTreatment: z.string().describe('How icons should be styled'),
+  }),
+
+  densityRhythm: z.object({
+    profile: z.enum(['compact', 'balanced', 'spacious']).describe('Density profile'),
+    rationale: z.string().describe('Why this density fits the category'),
+    contexts: z.object({
+      tables: z.string().describe('Table density guidance'),
+      dashboards: z.string().describe('Dashboard density guidance'),
+      forms: z.string().describe('Form density guidance'),
+      navigation: z.string().describe('Navigation density guidance'),
+    }),
+  }),
+
+  contrastPhilosophy: z.object({
+    profile: z.enum(['low-contrast-calm', 'high-contrast-assertive', 'mixed-functional']).describe('Contrast philosophy'),
+    rationale: z.string().describe('Why this contrast approach fits the mood'),
+    textHierarchy: z.string().describe('How text hierarchy is expressed'),
+    surfaceContrast: z.string().describe('How surfaces relate to each other'),
+    emphasisStrategy: z.string().describe('How emphasis is created'),
+  }),
+
+  textureUsage: z.object({
+    profile: z.enum(['none', 'subtle', 'expressive']).describe('Texture usage profile'),
+    rationale: z.string().describe('Why this texture approach fits'),
+    allowedContexts: z.array(z.string()).describe('Where texture may appear'),
+    prohibitedContexts: z.array(z.string()).describe('Where texture must not appear'),
+    performanceGuidance: z.string().describe('GPU/performance considerations'),
+  }),
+
+  motionCharacter: z.object({
+    profile: z.enum(['restrained', 'confident', 'energetic', 'ceremonial']).describe('Motion character'),
+    timingPhilosophy: z.string().describe('Timing philosophy (not specific numbers)'),
+    purposeOfMotion: z.string().describe('Why motion exists in this product'),
+    entranceExits: z.string().describe('How elements enter and exit'),
+    microInteractions: z.string().describe('How micro-interactions behave'),
+  }),
+
+  layoutPhilosophy: z.object({
+    profile: z.enum(['content-first', 'structure-first', 'narrative']).describe('Layout philosophy'),
+    rationale: z.string().describe('Why this layout approach fits'),
+    gridUsage: z.string().describe('How the grid is used'),
+    whiteSpaceIntent: z.string().describe('Purpose of white space'),
+    responsiveStrategy: z.string().describe('How layout responds to viewport'),
+  }),
+
+  generatedAt: z.string().describe('ISO timestamp of generation'),
+});
+
+export type VisualSignature = z.infer<typeof VisualSignatureSchema>;
+
+/**
+ * M4C: Iconography System Schema
+ * Defines icon style rules, metaphor preferences, and usage guidelines
+ */
+export const IconographySchema = z.object({
+  iconStyle: z.object({
+    profile: z.enum(['outline', 'solid', 'duotone', 'mixed']).describe('Icon style profile'),
+    rationale: z.string().describe('Why this icon style fits the brand'),
+    strokeWeight: z.enum(['thin', 'standard', 'bold']).describe('Stroke weight philosophy'),
+    strokeWeightRationale: z.string().describe('Why this stroke weight fits'),
+    cornerTreatment: z.string().describe('How icon corners align with visual signature'),
+  }),
+
+  metaphorStrategy: z.object({
+    profile: z.enum(['literal', 'symbolic', 'hybrid']).describe('Metaphor strategy'),
+    rationale: z.string().describe('Why this metaphor approach fits'),
+    categoryGuidance: z.string().describe('Category-specific metaphor guidance'),
+    examples: z.object({
+      preferred: z.array(z.string()).describe('Preferred metaphor examples'),
+      avoid: z.array(z.string()).describe('Metaphors to avoid'),
+    }),
+  }),
+
+  semanticRules: z.object({
+    oneIconOneMeaning: z.string().describe('One icon = one meaning rule'),
+    reusePolicy: z.string().describe('When to reuse existing icons'),
+    newIconCriteria: z.array(z.string()).describe('Criteria for introducing new icons'),
+    consistencyGuidelines: z.array(z.string()).describe('Consistency guidelines'),
+  }),
+
+  usageRules: z.object({
+    do: z.array(z.string()).describe('Icon usage best practices'),
+    dont: z.array(z.string()).describe('Icon usage anti-patterns'),
+  }),
+
+  accessibilityGuidance: z.object({
+    labelingExpectations: z.string().describe('Text label requirements'),
+    contrastConsiderations: z.string().describe('Contrast requirements'),
+    nonVisualSignaling: z.string().describe('When icons must not be the only signal'),
+    touchTargets: z.string().describe('Touch target requirements'),
+  }),
+
+  generatedAt: z.string().describe('ISO timestamp of generation'),
+});
+
+export type Iconography = z.infer<typeof IconographySchema>;
+
+/**
  * M4A: Enhanced Brand DNA Schema
  * Structured brand identity for consistent product generation
  */
@@ -35,6 +142,12 @@ export const BrandDNASchema = z.object({
     aesthetic: z.string().describe('Visual aesthetic (e.g., minimal, bold, organic)'),
     iconStyle: z.string().describe('Icon style preference'),
   }),
+
+  // M4B: Visual Signature (optional, generated after M4A.1)
+  visualSignature: VisualSignatureSchema.optional().describe('Visual signature system'),
+
+  // M4C: Iconography System (optional, generated after M4B)
+  iconography: IconographySchema.optional().describe('Iconography system'),
 
   // Brand moments
   productBrandMoments: z.array(

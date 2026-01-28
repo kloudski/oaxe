@@ -1,4 +1,122 @@
 /**
+ * M4B: Visual Signature System
+ * Formalizes how the brand looks beyond colors
+ */
+export type ShapeLanguage = 'rounded' | 'balanced' | 'sharp' | 'mixed';
+export type DensityProfile = 'compact' | 'balanced' | 'spacious';
+export type ContrastPhilosophy = 'low-contrast-calm' | 'high-contrast-assertive' | 'mixed-functional';
+export type TextureUsage = 'none' | 'subtle' | 'expressive';
+export type MotionCharacter = 'restrained' | 'confident' | 'energetic' | 'ceremonial';
+export type LayoutPhilosophy = 'content-first' | 'structure-first' | 'narrative';
+
+/**
+ * M4C: Iconography System
+ * Defines icon style rules, metaphor preferences, and usage guidelines
+ */
+export type IconStyle = 'outline' | 'solid' | 'duotone' | 'mixed';
+export type StrokeWeight = 'thin' | 'standard' | 'bold';
+export type MetaphorStrategy = 'literal' | 'symbolic' | 'hybrid';
+
+export interface VisualSignature {
+  shapeLanguage: {
+    profile: ShapeLanguage;
+    rationale: string;
+    cornerRadiusGuidance: string;
+    iconTreatment: string;
+  };
+
+  densityRhythm: {
+    profile: DensityProfile;
+    rationale: string;
+    contexts: {
+      tables: string;
+      dashboards: string;
+      forms: string;
+      navigation: string;
+    };
+  };
+
+  contrastPhilosophy: {
+    profile: ContrastPhilosophy;
+    rationale: string;
+    textHierarchy: string;
+    surfaceContrast: string;
+    emphasisStrategy: string;
+  };
+
+  textureUsage: {
+    profile: TextureUsage;
+    rationale: string;
+    allowedContexts: string[];
+    prohibitedContexts: string[];
+    performanceGuidance: string;
+  };
+
+  motionCharacter: {
+    profile: MotionCharacter;
+    timingPhilosophy: string;
+    purposeOfMotion: string;
+    entranceExits: string;
+    microInteractions: string;
+  };
+
+  layoutPhilosophy: {
+    profile: LayoutPhilosophy;
+    rationale: string;
+    gridUsage: string;
+    whiteSpaceIntent: string;
+    responsiveStrategy: string;
+  };
+
+  generatedAt: string;
+}
+
+/**
+ * M4C: Iconography System Interface
+ * Defines icon style rules, metaphor preferences, and usage guidelines
+ */
+export interface Iconography {
+  iconStyle: {
+    profile: IconStyle;
+    rationale: string;
+    strokeWeight: StrokeWeight;
+    strokeWeightRationale: string;
+    cornerTreatment: string;
+  };
+
+  metaphorStrategy: {
+    profile: MetaphorStrategy;
+    rationale: string;
+    categoryGuidance: string;
+    examples: {
+      preferred: string[];
+      avoid: string[];
+    };
+  };
+
+  semanticRules: {
+    oneIconOneMeaning: string;
+    reusePolicy: string;
+    newIconCriteria: string[];
+    consistencyGuidelines: string[];
+  };
+
+  usageRules: {
+    do: string[];
+    dont: string[];
+  };
+
+  accessibilityGuidance: {
+    labelingExpectations: string;
+    contrastConsiderations: string;
+    nonVisualSignaling: string;
+    touchTargets: string;
+  };
+
+  generatedAt: string;
+}
+
+/**
  * M4A: Enhanced Brand DNA Interface
  * Structured brand identity for consistent product generation
  */
@@ -33,6 +151,12 @@ export interface BrandDNA {
     aesthetic: string;
     iconStyle: string;
   };
+
+  // M4B: Visual Signature (optional, generated after M4A.1)
+  visualSignature?: VisualSignature;
+
+  // M4C: Iconography System (optional, generated after M4B)
+  iconography?: Iconography;
 
   // Brand moments
   productBrandMoments: {

@@ -2,6 +2,8 @@ import { generateProductSpec } from './llm';
 import { appendLog, updateRunStatus, getRun, setGeneratedApp, setBrandDNA, setLaunchAssets, setEvolution } from './runStore';
 import { generateApp, getRelativeGeneratedPath } from './generators';
 import { generateBrandDNA } from './generators/brandDNA';
+import { generateVisualSignature, getVisualSignatureSummary } from './generators/visualSignature';
+import { generateIconography, getIconographySummary } from './generators/iconography';
 import { generateLaunchAssets, generateLaunchPlaybookMarkdown } from './generators/launchAssets';
 import { generateEvolutionRoadmap, generateEvolutionMarkdown } from './generators/evolution';
 import type { OaxeOutput } from './types';
@@ -32,8 +34,20 @@ export async function executePlan(runId: string): Promise<void> {
     // M4A: Generate enhanced Brand DNA
     await appendLog(runId, 'info', 'Generating Brand DNA...');
     const brandDNA = generateBrandDNA(run.directive, output);
-    await setBrandDNA(runId, brandDNA);
     await appendLog(runId, 'info', `Brand DNA generated: ${brandDNA.category} / ${brandDNA.mood} / ${brandDNA.archetype}`);
+
+    // M4B: Generate Visual Signature (immediately after M4A.1)
+    await appendLog(runId, 'info', 'M4B: Generating Visual Signature...');
+    const visualSignature = generateVisualSignature(brandDNA);
+    brandDNA.visualSignature = visualSignature;
+    await appendLog(runId, 'info', `Visual Signature generated: ${getVisualSignatureSummary(visualSignature)}`);
+
+    // M4C: Generate Iconography System (immediately after M4B)
+    await appendLog(runId, 'info', 'M4C: Generating Iconography System...');
+    const iconography = generateIconography(brandDNA);
+    brandDNA.iconography = iconography;
+    await setBrandDNA(runId, brandDNA);
+    await appendLog(runId, 'info', `Iconography generated: ${getIconographySummary(iconography)}`);
 
     // Generate the app files (M5A: pass Brand DNA for UI expression)
     await appendLog(runId, 'info', 'Generating Next.js app scaffold...');

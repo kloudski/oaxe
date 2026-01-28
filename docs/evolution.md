@@ -1,8 +1,8 @@
-# SignCraft AI Evolution Roadmap
+# SalesMind Evolution Roadmap
 
-Generated: 2026-01-28T06:56:34.237Z
+Generated: 2026-01-28T10:57:08.821Z
 Category: technology
-Target: Sign Shop Owners
+Target: Sales Managers
 
 ---
 
@@ -16,14 +16,14 @@ Developer tools assume you already know what you need. Setup friction, configura
 Small engineering teams (3-15 engineers) at startups who need to ship fast without dedicated DevOps.
 
 ### Use Case
-SignCraft AI helps sign shop owners thoughtfully designed for technology workflows.
+SalesMind helps sales managers thoughtfully designed for technology workflows.
 
 ### Must-Have Features
-- AI-driven project management
-- Automated inventory tracking
-- Customer relationship management
-- Order processing and tracking
-- Design collaboration tools
+- AI-driven task automation
+- Predictive sales analytics
+- Automated lead management
+- Customizable sales pipelines
+- Integrated communication channels
 
 ### Intentionally Not Built
 - Cloud hosting or deployment
@@ -104,7 +104,7 @@ Managed cloud at $99/month/team. Enterprise at $499/month with SSO and support.
 | Setup | CLI with interactive prompts | Team templates with customization | AI-assisted from README or existing code |
 | Configuration | Single config file with comments | Environment-specific overrides | Drift detection and auto-remediation |
 | Deployment | Export for manual deploy | Push-button to major clouds | Managed hosting with preview environments |
-| Project Management | Basic CRUD, list view | Advanced filtering, bulk operations | Intelligent suggestions, automation |
+| User Management | Basic CRUD, list view | Advanced filtering, bulk operations | Intelligent suggestions, automation |
 
 ---
 

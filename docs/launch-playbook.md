@@ -1,13 +1,13 @@
-# SignCraft AI Launch Playbook
+# SalesMind Launch Playbook
 
-Generated: 2026-01-28T06:56:34.228Z
+Generated: 2026-01-28T10:57:08.808Z
 Brand: technology / minimal / Magician
 
 ---
 
 ## Pinned Tweet
 
-> SignCraft AI: Incidents and deploys in one view—no more missed deadlines or lost context.
+> SalesMind: Incidents and deploys in one view—no more missed deadlines or lost context.
 
 ---
 
@@ -21,11 +21,11 @@ Use these for launch day and the following week. Written in first person, from t
 
 ### Tweet 2
 
-> Built SignCraft AI to do one thing well: thoughtfully designed for technology workflows.
+> Built SalesMind to do one thing well: thoughtfully designed for technology workflows.
 
 ### Tweet 3
 
-> The right tool changes everything.
+> Built to make hard things feel natural.
 
 ---
 
@@ -41,8 +41,8 @@ Incidents, deploys, and logs in one place—no more messy handoffs or tracking c
 
 ### Key Benefits
 - Incidents in one view
-- Automated inventory tracking
-- Customer relationship management
+- Predictive sales analytics
+- Automated lead management
 
 ---
 
@@ -56,17 +56,17 @@ Incidents, deploys, and logs in one place—no more messy handoffs or tracking c
 ### Supporting Screenshots
 
 #### Screenshot 2
-- **Screen:** Create new Project form
+- **Screen:** Create new User form
 - **Communicates:** Easy onboarding and data entry
 
 
 #### Screenshot 3
-- **Screen:** Project detail view with full information
+- **Screen:** User detail view with full information
 - **Communicates:** Data richness and organization
 
 
 #### Screenshot 4
-- **Screen:** Client list or settings view
+- **Screen:** Lead list or settings view
 - **Communicates:** Configurability and depth
 
 
@@ -87,12 +87,12 @@ Character count: 46/60
 - **Mood:** minimal
 - **Archetype:** Magician
 - **Voice Tone:** Professional, Innovative, Supportive
-- **Target Audience:** Sign Shop Owners
+- **Target Audience:** Sales Managers
 
 ### Voice Keywords
 - Efficiency
-- Innovation
-- Reliability
+- Intelligence
+- Empowerment
 
 ### Do Say
 - "Simple"

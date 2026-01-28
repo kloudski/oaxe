@@ -16,6 +16,12 @@ export * from './types';
 export { getTokensForRunMetadata, extractBrandDNAForTokens, shouldUseBrandDNAOverride };
 export { generateBrandDNA, getBrandDNAAsJSON };
 
+// M4B: Export visual signature generator
+export { generateVisualSignature, getVisualSignatureAsJSON, getVisualSignatureSummary } from './visualSignature';
+
+// M4C: Export iconography generator
+export { generateIconography, getIconographyAsJSON, getIconographySummary } from './iconography';
+
 // M5A: Export brand expression utilities
 export * from './brandExpression';
 
