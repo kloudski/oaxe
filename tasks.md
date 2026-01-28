@@ -296,6 +296,299 @@ Files modified:
 
 ---
 
+## [M3A] Design Tokens Foundation (OKLCH)
+
+**Status:** Complete
+**Owner:** @engineer
+**Dependencies:** [M7++]
+**Priority:** P0
+
+### Objective
+Implement a design token system using OKLCH color space. Generated apps use semantic tokens instead of hardcoded colors. Light-mode-first with dark mode derived via L-shift only.
+
+### Acceptance Criteria
+- [x] Token output format: `src/design/tokens.css` with OKLCH CSS variables
+- [x] Tailwind integration: `tailwind.config.ts` references CSS variables (no hex codes)
+- [x] Token generator produces neutral scale, brand accent, and semantic hues
+- [x] Dark mode derived by L-shift only (same C/H preserved)
+- [x] Components updated to use semantic token classes (bg, fg, border, surface, primary, etc.)
+- [x] Theme selector helper: `src/lib/theme.ts` with `setTheme("light"|"dark")`
+- [x] ThemeToggle component in header
+- [x] ThemeInitScript for flash-free hydration
+- [x] Tokens persisted as JSON in generated output
+- [x] Generated apps build and run
+- [x] No hex codes in generated app outputs
+
+### Performance Implications
+- CSS custom properties for efficient theming
+- No layout shifts on theme change
+- Minimal CSS overhead from OKLCH syntax
+
+### Security Implications
+- No security impact (UI-only changes)
+
+### Tasks
+- [x] Create tokens.ts generator — @engineer
+- [x] Generate OKLCH-based tokens.css — @engineer
+- [x] Generate tokenized tailwind.config.ts — @engineer
+- [x] Update globals.css to import tokens — @engineer
+- [x] Add theme.ts helper with light/dark toggle — @engineer
+- [x] Add ThemeToggle component — @engineer
+- [x] Add ThemeInitScript for hydration — @engineer
+- [x] Update AppShell with theme toggle — @engineer
+- [x] Update all components to use semantic tokens — @engineer
+- [x] Update all page generators to use semantic tokens — @engineer
+- [x] Export token JSON for run metadata — @engineer
+
+### Notes
+OKLCH color space provides perceptual uniformity. Token architecture:
+
+**Color Scales (OKLCH):**
+- Neutral: Very low chroma (0.01) for backgrounds, borders, text
+- Primary: Brand hue extracted from designTokens.colors[0]
+- Semantic: success (145°), warning (45°), error (25°), info (220°)
+
+**Semantic Tokens (Tailwind classes):**
+- Background: `bg`, `bg-secondary`, `surface`, `surface-raised`, `muted`
+- Text: `fg`, `fg-secondary`, `fg-muted`
+- Border: `border`, `border-subtle`, `border-strong`
+- Primary: `primary`, `primary-hover`, `primary-fg`, `primary-muted`
+- Status: `success`, `warning`, `error`, `info` (each with muted variants)
+
+**Files created:**
+- generators/tokens.ts: New token generator
+- Generated: src/design/tokens.css, src/design/tokens.json, src/lib/theme.ts
+
+**Files modified:**
+- generators/scaffold.ts: Uses tokenized tailwind.config.ts and globals.css
+- generators/components.ts: All components use semantic token classes
+- generators/pages.ts: All pages use semantic token classes
+- generators/index.ts: Includes token generation, exports metadata helper
+
+---
+
+## [M3B] Brand-Driven Tokens
+
+**Status:** Complete
+**Owner:** @engineer
+**Dependencies:** [M3A]
+**Priority:** P0
+
+### Objective
+Make design tokens brand-driven and ownable per generated product. Tokens are computed from directive text, product name, and brand DNA fields rather than hardcoded values.
+
+### Acceptance Criteria
+- [x] Token generator accepts "brand seed" inputs (directive, appName, brandDNA)
+- [x] Compute brandHue (0-360) and brandChroma (0-0.22) from semantic analysis
+- [x] Compute neutralHue derived from brandHue offset (+30°)
+- [x] Semantic hues are FIXED (not harmonized) for UX predictability
+- [x] Generate primary scale using computed brandHue/Chroma (OKLCH only)
+- [x] Generate neutrals using computed neutralHue with very low chroma
+- [x] Contrast guardrails ensure primary-fg works on primary buttons
+- [x] Persist extended metadata in tokens.json (brandHue, neutralHue, mood, category)
+- [x] GeneratorOptions accepts directive for brand extraction
+- [x] No new dependencies added
+
+### Performance Implications
+- No runtime overhead - all computation at generation time
+- Category matching uses simple keyword scoring
+
+### Security Implications
+- No security impact (UI-only changes)
+
+### Design Decisions
+
+**Brand Category Hue Mappings:**
+- legal: 225° (professional blue)
+- finance: 215° (trust blue)
+- healthcare: 175° (calm teal)
+- wellness: 155° (serene green)
+- technology: 235° (tech purple-blue)
+- creative: 285° (vibrant purple)
+- education: 195° (approachable cyan)
+- ecommerce: 35° (warm orange)
+- social: 265° (friendly purple)
+- productivity: 205° (focused blue)
+- nature: 135° (organic green)
+- energy: 25° (active red-orange)
+
+**Semantic Hue Strategy: FIXED**
+Semantic hues (success, warning, error, info) are NOT harmonized with brand hue.
+Rationale: Users have universal color associations (green=good, red=bad) that should not be overridden for brand consistency. This ensures predictable UX across all generated apps.
+
+**Neutral Hue Derivation:**
+neutralHue = (brandHue + 30) % 360
+This creates subtle color harmony while keeping neutrals perceptually neutral.
+
+**Contrast Guardrails:**
+- Primary button L: 0.50-0.65 (allows white text at ~4.5:1 contrast)
+- Min text L on light bg: 0.45
+- Max text L on dark bg: 0.85
+
+### Files Modified
+- generators/tokens.ts: Brand seed extraction, category matching, tone modifiers
+- generators/types.ts: Added directive to GeneratorOptions
+- generators/index.ts: Pass directive through to token generators
+- generators/scaffold.ts: Accept directive for Tailwind config generation
+
+### Notes
+Tokens now differ materially based on directive. Example token differences:
+- "legal case management" → brandHue: 225° (blue), mood: professional
+- "wellness ritual tracker" → brandHue: 155° (green), mood: calm
+
+---
+
+## [M3C] Token Semantics + Metadata Patch
+
+**Status:** Complete
+**Owner:** @engineer
+**Dependencies:** [M3B]
+**Priority:** P0
+
+### Objective
+Fix token export metadata and make dark-mode scales preserve semantic order (50 stays lightest), while still changing L only.
+
+### Acceptance Criteria
+- [x] tokens.json includes category, mood, brandHue, brandChroma, neutralHue, neutralChroma
+- [x] tokens.json includes matchedKeywords and matchSource fields
+- [x] Dark mode preserves scale semantics: 50 is lightest, 950 is darkest
+- [x] Dark mode only changes L values (C and H preserved from light mode)
+- [x] No hex codes anywhere in token output
+- [x] Build passes
+
+### Performance Implications
+- No runtime overhead - all computation at generation time
+
+### Security Implications
+- No security impact (UI-only changes)
+
+### Design Decisions
+
+**Dark Mode L-Shift Strategy: Semantic Preserved**
+Previously, dark mode inverted the L ladder (50 became darkest, 950 became lightest).
+This broke semantic expectations where developers expect "50" to always be a light tint.
+
+New approach:
+- 50 stays the lightest step (high L) in both light and dark mode
+- 950 stays the darkest step (low L) in both light and dark mode
+- L values shift down overall for dark surfaces, but order is preserved
+
+Example (neutral scale):
+- Light mode: 50=0.985, 500=0.55, 950=0.12
+- Dark mode:  50=0.94,  500=0.42, 950=0.10
+
+**Metadata Fields Added:**
+- `matchedKeywords`: Array of keywords that matched during category detection
+- `matchSource`: Which input source had the strongest match (directive/appName/brandDNA/elevatorPitch/default)
+
+### Files Modified
+- generators/tokens.ts: Updated BrandSeed interface, extractBrandSeed(), dark mode L ladders, tokens.json output
+
+### Notes
+This patch ensures:
+1. In dark mode, `bg-primary-50` is still a light shade of the brand color
+2. Token consumers can see exactly why a particular hue/category was chosen
+3. Debugging brand extraction is now transparent via matchedKeywords/matchSource
+
+---
+
+## [M3D] Token Variance Amplifier
+
+**Status:** Complete
+**Owner:** @engineer
+**Dependencies:** [M3C]
+**Priority:** P0
+
+### Objective
+Increase brand distinctiveness across generated apps by adding controlled variance in neutrals, elevation, and primary scale shaping based on category+mood, while staying OKLCH-only and preserving accessibility.
+
+### Acceptance Criteria
+- [x] Category-driven neutral hue offsets (not fixed +30°)
+- [x] Mood-based neutral chroma variation (calm/serious: 0.006-0.012, friendly/playful: 0.010-0.018)
+- [x] Primary scale chroma curve (low at 50-200, peak at 500-700, taper at 900-950)
+- [x] Primary button L in light mode supports white text (primaryFg) without changing hue
+- [x] Structural tokens emitted in tokens.css and tokens.json:
+  - radiusSm/radiusMd/radiusLg/radiusFull
+  - shadowXs/shadowSm/shadowMd/shadowLg/shadowXl
+  - borderWidthSubtle/Default/Strong
+- [x] Structural tokens derived from mood (10 mood presets)
+- [x] Components updated to use structural tokens (Card, Button, DataTable, EntityForm, AppShell, Sidebar, ThemeToggle)
+- [x] Tailwind config extended with radius/shadow/borderWidth
+- [x] tokens.json includes all M3D metadata (neutralOffset, neutralChromaRange, primaryChromaStrategy, structuralTokens)
+- [x] Build passes
+
+### Performance Implications
+- No runtime overhead - all computation at generation time
+- CSS custom properties for efficient theming
+- Structural tokens use CSS variables for theme consistency
+
+### Security Implications
+- No security impact (UI-only changes)
+
+### Design Decisions
+
+**Category-Driven Neutral Offsets:**
+Different categories benefit from different neutral warmth/coolness:
+- legal: +15° (slightly warm grays for trust)
+- finance: +20° (cool professional grays)
+- healthcare: +25° (calm, clinical feel)
+- wellness: +35° (warmer, more organic grays)
+- technology: +10° (very subtle, nearly pure gray)
+- creative: +45° (distinctive warm offset)
+- education: +30° (approachable warmth)
+- ecommerce: +40° (warm, inviting grays)
+- social: +50° (distinctive personality)
+- productivity: +15° (clean, focused grays)
+- nature: +55° (organic, earthy grays)
+- energy: +20° (warm but not overpowering)
+
+**Mood-Based Neutral Chroma:**
+- calm/serious/professional/minimal: 0.004-0.012 (very subtle tint)
+- friendly/warm: 0.010-0.016 (noticeable but not heavy)
+- playful/vibrant: 0.012-0.018 (distinctive personality)
+
+**Primary Chroma Curve (Bell Curve Strategy):**
+```
+Step  | Multiplier | Effect
+------|------------|----------------
+50    | 0.20       | Very subtle tint
+100   | 0.30       | Subtle
+200   | 0.50       | Building
+300   | 0.75       | Approaching peak
+400   | 0.92       | Near peak
+500   | 1.00       | Peak vibrance
+600   | 1.00       | Peak maintained
+700   | 0.90       | Starting taper
+800   | 0.70       | Tapering
+900   | 0.50       | Muted
+950   | 0.35       | Very muted
+```
+
+**Structural Tokens by Mood:**
+10 mood presets define radius/shadow/border characteristics:
+- minimal: Sharp corners (0.25-0.5rem), subtle shadows
+- professional: Balanced (0.25-0.75rem), standard shadows
+- serious: Very sharp (0.125-0.375rem), minimal shadows
+- calm: Soft corners (0.375-1rem), gentle shadows
+- friendly: Soft corners (0.375-1rem), medium shadows
+- playful: Very rounded (0.5-1.25rem), prominent shadows
+- warm: Balanced with warm-tinted shadows
+- bold: Balanced corners, strong shadows
+- vibrant: Soft corners, medium-strong shadows
+- elegant: Sharp corners (0.25-0.625rem), subtle shadows
+
+### Files Modified
+- generators/tokens.ts: Added CATEGORY_NEUTRAL_OFFSETS, MOOD_NEUTRAL_CHROMA, MOOD_STRUCTURAL_TOKENS, StructuralTokens interface, getStructuralTokens(), updated extractBrandSeed(), generateColorScale() with chroma curve, generateTokensCSS() with structural tokens, updated tokens.json output
+- generators/components.ts: Updated Card, Button, DataTable, EntityForm, AppShell, Sidebar, ThemeToggle to use structural tokens
+
+### Notes
+Generated apps now have materially different visual identities based on category and mood:
+- "legal case management" → professional mood, sharp corners, subtle shadows, cool neutral tint
+- "wellness ritual tracker" → calm mood, soft corners, gentle shadows, warm neutral tint
+- "social networking app" → friendly mood, soft corners, medium shadows, distinctive neutral tint
+
+---
+
 ## [M1] Product Specification
 
 **Status:** Not Started

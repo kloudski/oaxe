@@ -46,6 +46,7 @@ function generateAppShell(output: OaxeOutput): string {
 
 import { useState } from 'react';
 import { Sidebar } from './Sidebar';
+import { ThemeToggle } from './ThemeToggle';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -55,17 +56,17 @@ export function AppShell({ children }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-secondary)]">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 h-14 bg-[var(--bg-primary)] border-b border-[var(--border-default)] z-40 flex items-center justify-between px-4 shadow-[var(--shadow-xs)]">
+    <div className="min-h-screen bg-bg-secondary">
+      {/* Header - M3D structural tokens */}
+      <header className="fixed top-0 left-0 right-0 h-14 bg-surface border-b border-border z-40 flex items-center justify-between px-4 shadow-sm">
         <div className="flex items-center">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-[var(--bg-hover)] rounded-lg transition-colors mr-3"
+            className="p-2 hover:bg-muted rounded transition-colors mr-3"
             aria-label="Toggle sidebar"
           >
             <svg
-              className="w-5 h-5 text-[var(--text-muted)]"
+              className="w-5 h-5 text-fg-muted"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -78,20 +79,21 @@ export function AppShell({ children }: AppShellProps) {
               />
             </svg>
           </button>
-          <a href="/" className="text-base font-semibold text-[var(--text-primary)] tracking-tight">
+          <a href="/" className="text-base font-semibold text-fg tracking-tight">
             ${output.appName}
           </a>
         </div>
 
-        {/* Header actions placeholder */}
+        {/* Header actions - M3D structural tokens */}
         <div className="flex items-center gap-2">
-          <button className="p-2 hover:bg-[var(--bg-hover)] rounded-lg transition-colors">
-            <svg className="w-5 h-5 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button className="p-2 hover:bg-muted rounded transition-colors">
+            <svg className="w-5 h-5 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </button>
-          <div className="w-8 h-8 rounded-full bg-[var(--accent-muted)] flex items-center justify-center">
-            <span className="text-sm font-medium text-primary-600 dark:text-primary-400">U</span>
+          <ThemeToggle />
+          <div className="w-8 h-8 rounded-full bg-primary-muted flex items-center justify-center">
+            <span className="text-sm font-medium text-primary-600">U</span>
           </div>
         </div>
       </header>
@@ -159,18 +161,18 @@ export function Sidebar({ isOpen }: SidebarProps) {
 
   return (
     <aside
-      className={\`fixed top-14 left-0 bottom-0 w-60 bg-[var(--bg-primary)] border-r border-[var(--border-default)] transform transition-transform duration-200 z-30 \${
+      className={\`fixed top-14 left-0 bottom-0 w-60 bg-surface border-r border-border transform transition-transform duration-200 z-30 \${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       }\`}
     >
       <nav className="p-3 space-y-0.5">
-        {/* Dashboard link - Core app route, always at / */}
+        {/* Dashboard link - Core app route, always at / - M3D structural tokens */}
         <Link
           href="/"
-          className={\`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 \${
+          className={\`flex items-center gap-3 px-3 py-2 rounded text-sm font-medium transition-all duration-150 \${
             showDashboardActive
-              ? 'bg-[var(--accent-muted)] text-primary-600 dark:text-primary-400'
-              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
+              ? 'bg-primary-muted text-primary-600'
+              : 'text-fg-secondary hover:text-fg hover:bg-muted'
           }\`}
         >
           <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,18 +183,18 @@ export function Sidebar({ isOpen }: SidebarProps) {
 
         {/* Section label */}
         <div className="pt-4 pb-1 px-3">
-          <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Entities</span>
+          <span className="text-xs font-medium text-fg-muted uppercase tracking-wider">Entities</span>
         </div>
 
-        {/* Entity nav items - use collision-aware paths */}
+        {/* Entity nav items - use collision-aware paths - M3D structural tokens */}
         {entityNavItems.map((item) => (
           <Link
             key={item.route}
             href={item.route}
-            className={\`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 \${
+            className={\`flex items-center gap-3 px-3 py-2 rounded text-sm font-medium transition-all duration-150 \${
               isPathActive(pathname, item.route)
-                ? 'bg-[var(--accent-muted)] text-primary-600 dark:text-primary-400'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
+                ? 'bg-primary-muted text-primary-600'
+                : 'text-fg-secondary hover:text-fg hover:bg-muted'
             }\`}
           >
             <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -269,12 +271,12 @@ export function DataTable<T extends { id: string }>({
     return String(value);
   };
 
-  // Loading state
+  // Loading state - uses M3D structural tokens
   if (isLoading) {
     return (
-      <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-default)] overflow-hidden">
+      <div className="bg-surface rounded-lg border border-border overflow-hidden shadow-sm">
         <div className="p-12 text-center">
-          <div className="inline-flex items-center gap-2 text-[var(--text-muted)]">
+          <div className="inline-flex items-center gap-2 text-fg-muted">
             <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
@@ -286,41 +288,42 @@ export function DataTable<T extends { id: string }>({
     );
   }
 
-  // Empty state
+  // Empty state - uses M3D structural tokens
   if (data.length === 0) {
     return (
-      <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-default)] overflow-hidden">
+      <div className="bg-surface rounded-lg border border-border overflow-hidden shadow-sm">
         <div className="p-12 text-center">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center">
-            <svg className="w-6 h-6 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+            <svg className="w-6 h-6 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
           </div>
-          <p className="text-[var(--text-secondary)] font-medium">{emptyMessage}</p>
-          <p className="text-sm text-[var(--text-muted)] mt-1">Create your first item to get started</p>
+          <p className="text-fg-secondary font-medium">{emptyMessage}</p>
+          <p className="text-sm text-fg-muted mt-1">Create your first item to get started</p>
         </div>
       </div>
     );
   }
 
+  // Data table - uses M3D structural tokens
   return (
-    <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-default)] overflow-hidden shadow-[var(--shadow-sm)]">
+    <div className="bg-surface rounded-lg border border-border overflow-hidden shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-[var(--border-default)] bg-[var(--bg-secondary)]">
+            <tr className="border-b border-border bg-bg-secondary">
               {columns.map((col, index) => (
                 <th
                   key={String(col.key)}
                   onClick={() => handleSort(col.key)}
-                  className={\`px-4 py-3 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none \${
-                    index !== columns.length - 1 ? 'border-r border-[var(--border-subtle)]' : ''
+                  className={\`px-4 py-3 text-left text-xs font-semibold text-fg-muted uppercase tracking-wider cursor-pointer hover:text-fg transition-colors select-none \${
+                    index !== columns.length - 1 ? 'border-r border-border-subtle' : ''
                   }\`}
                 >
                   <div className="flex items-center gap-1.5">
                     {col.header}
                     {sortKey === col.key && (
-                      <svg className="w-3.5 h-3.5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         {sortDir === 'asc'
                           ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                           : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -341,16 +344,16 @@ export function DataTable<T extends { id: string }>({
                   onRowClick ? 'cursor-pointer' : ''
                 } \${
                   selectedId === row.id
-                    ? 'bg-[var(--accent-muted)]'
-                    : 'hover:bg-[var(--bg-hover)]'
+                    ? 'bg-primary-muted'
+                    : 'hover:bg-muted'
                 } \${
-                  rowIndex !== sortedData.length - 1 ? 'border-b border-[var(--border-subtle)]' : ''
+                  rowIndex !== sortedData.length - 1 ? 'border-b border-border-subtle' : ''
                 } transition-colors\`}
               >
                 {columns.map((col) => (
                   <td
                     key={String(col.key)}
-                    className="px-4 py-3.5 text-sm text-[var(--text-primary)]"
+                    className="px-4 py-3.5 text-sm text-fg"
                   >
                     {col.render
                       ? col.render(row[col.key], row)
@@ -440,10 +443,11 @@ export function EntityForm<T extends Record<string, unknown>>({
     }
   };
 
+  // M3D: Input styling uses mood-derived structural tokens (rounded uses --radius-md)
   const baseInputClass =
-    'w-full px-3.5 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-default)] rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] transition-all duration-150 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20';
+    'w-full px-3.5 py-2.5 bg-surface border border-border rounded text-fg placeholder:text-fg-muted transition-all duration-150 focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/20 shadow-xs';
 
-  const errorInputClass = 'border-red-400 dark:border-red-500 focus:border-red-500 focus:ring-red-500/20';
+  const errorInputClass = 'border-error focus:border-error focus:ring-error/20';
 
   const renderField = (field: FieldConfig) => {
     const value = values[field.name] ?? '';
@@ -457,9 +461,9 @@ export function EntityForm<T extends Record<string, unknown>>({
             type="checkbox"
             checked={Boolean(value)}
             onChange={(e) => handleChange(field.name, e.target.checked)}
-            className="w-4 h-4 rounded border-[var(--border-default)] bg-[var(--bg-primary)] text-primary-500 focus:ring-primary-500 focus:ring-offset-0 transition-colors"
+            className="w-4 h-4 rounded border-border bg-surface text-primary focus:ring-ring focus:ring-offset-0 transition-colors"
           />
-          <span className="text-sm text-[var(--text-primary)]">{field.label}</span>
+          <span className="text-sm text-fg">{field.label}</span>
         </label>
       );
     }
@@ -512,11 +516,11 @@ export function EntityForm<T extends Record<string, unknown>>({
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {errors._form && (
-        <div className="p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg flex items-start gap-3">
-          <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="p-4 bg-error-muted border border-error/20 rounded flex items-start gap-3">
+          <svg className="w-5 h-5 text-error flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p className="text-sm text-red-600 dark:text-red-400">{errors._form}</p>
+          <p className="text-sm text-error">{errors._form}</p>
         </div>
       )}
 
@@ -524,17 +528,17 @@ export function EntityForm<T extends Record<string, unknown>>({
         {fields.map((field) => (
           <div key={field.name}>
             {field.type !== 'checkbox' && (
-              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
+              <label className="block text-sm font-medium text-fg mb-1.5">
                 {field.label}
-                {field.required && <span className="text-red-500 ml-0.5">*</span>}
+                {field.required && <span className="text-error ml-0.5">*</span>}
               </label>
             )}
             {renderField(field)}
             {field.helperText && !errors[field.name] && (
-              <p className="text-xs text-[var(--text-muted)] mt-1.5">{field.helperText}</p>
+              <p className="text-xs text-fg-muted mt-1.5">{field.helperText}</p>
             )}
             {errors[field.name] && (
-              <p className="text-sm text-red-500 mt-1.5 flex items-center gap-1.5">
+              <p className="text-sm text-error mt-1.5 flex items-center gap-1.5">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -545,13 +549,13 @@ export function EntityForm<T extends Record<string, unknown>>({
         ))}
       </div>
 
-      {/* Form actions */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-default)]">
+      {/* Form actions - M3D structural tokens */}
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-primary)] border border-[var(--border-default)] hover:border-[var(--border-strong)] rounded-lg transition-all duration-150"
+            className="px-4 py-2.5 text-sm font-medium text-fg-secondary hover:text-fg bg-surface border border-border hover:border-border-strong rounded transition-all duration-150 shadow-xs"
           >
             Cancel
           </button>
@@ -559,7 +563,7 @@ export function EntityForm<T extends Record<string, unknown>>({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-5 py-2.5 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-all duration-150 flex items-center gap-2"
+          className="px-5 py-2.5 text-sm font-medium text-primary-fg bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed rounded transition-all duration-150 flex items-center gap-2 shadow-xs hover:shadow-sm"
         >
           {isSubmitting && (
             <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -582,13 +586,13 @@ function generateStatusBadge(): string {
   variant?: 'default' | 'success' | 'warning' | 'error' | 'info';
 }
 
-// Light-mode-first semantic color system
+// OKLCH token-based semantic color system
 const variantStyles: Record<string, string> = {
-  default: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300',
-  success: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400',
-  warning: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400',
-  error: 'bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-400',
-  info: 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400',
+  default: 'bg-muted text-fg-secondary',
+  success: 'bg-success-muted text-success-700',
+  warning: 'bg-warning-muted text-warning-700',
+  error: 'bg-error-muted text-error-700',
+  info: 'bg-info-muted text-info-700',
 };
 
 const statusVariants: Record<string, string> = {
@@ -634,24 +638,28 @@ export function StatusBadge({ status, variant }: StatusBadgeProps) {
 function generateButton(): string {
   return `import { forwardRef } from 'react';
 
+/**
+ * Button component using M3D structural tokens
+ * Radius and shadow are derived from mood-based design tokens
+ */
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
 }
 
-// Light-mode-first button variants
+// OKLCH token-based button variants with M3D structural tokens
 const variantStyles = {
-  primary: 'bg-primary-500 hover:bg-primary-600 text-white shadow-sm',
-  secondary: 'bg-[var(--bg-primary)] border border-[var(--border-default)] hover:border-[var(--border-strong)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)]',
-  ghost: 'bg-transparent hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
-  danger: 'bg-red-500 hover:bg-red-600 text-white shadow-sm',
+  primary: 'bg-primary hover:bg-primary-hover text-primary-fg shadow-xs hover:shadow-sm',
+  secondary: 'bg-surface border border-border hover:border-border-strong hover:bg-muted text-fg shadow-xs',
+  ghost: 'bg-transparent hover:bg-muted text-fg-secondary hover:text-fg',
+  danger: 'bg-error hover:bg-error-600 text-error-fg shadow-xs hover:shadow-sm',
 };
 
 const sizeStyles = {
-  sm: 'px-3 py-1.5 text-sm gap-1.5',
-  md: 'px-4 py-2 text-sm gap-2',
-  lg: 'px-5 py-2.5 text-base gap-2',
+  sm: 'px-3 py-1.5 text-sm gap-1.5 rounded-sm',
+  md: 'px-4 py-2 text-sm gap-2 rounded',
+  lg: 'px-5 py-2.5 text-base gap-2 rounded-md',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -660,7 +668,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         disabled={disabled || isLoading}
-        className={\`inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed \${variantStyles[variant]} \${sizeStyles[size]} \${className}\`}
+        className={\`inline-flex items-center justify-center font-medium transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed \${variantStyles[variant]} \${sizeStyles[size]} \${className}\`}
         {...props}
       >
         {isLoading && (
@@ -680,10 +688,15 @@ Button.displayName = 'Button';
 }
 
 function generateCard(): string {
-  return `interface CardProps {
+  return `/**
+ * Card component using M3D structural tokens
+ * Radius and shadow are derived from mood-based design tokens
+ */
+interface CardProps {
   children: React.ReactNode;
   className?: string;
   padding?: 'none' | 'sm' | 'md' | 'lg';
+  elevation?: 'flat' | 'raised' | 'floating';
 }
 
 const paddingStyles = {
@@ -693,9 +706,16 @@ const paddingStyles = {
   lg: 'p-6',
 };
 
-export function Card({ children, className = '', padding = 'md' }: CardProps) {
+// M3D: Elevation uses mood-derived shadow tokens
+const elevationStyles = {
+  flat: 'shadow-none',
+  raised: 'shadow-sm',
+  floating: 'shadow-md',
+};
+
+export function Card({ children, className = '', padding = 'md', elevation = 'raised' }: CardProps) {
   return (
-    <div className={\`bg-[var(--bg-primary)] rounded-xl border border-[var(--border-default)] shadow-[var(--shadow-sm)] \${paddingStyles[padding]} \${className}\`}>
+    <div className={\`bg-surface rounded-lg border border-border \${elevationStyles[elevation]} \${paddingStyles[padding]} \${className}\`}>
       {children}
     </div>
   );
@@ -709,10 +729,10 @@ interface CardHeaderProps {
 
 export function CardHeader({ title, description, action }: CardHeaderProps) {
   return (
-    <div className="flex items-start justify-between mb-5 pb-4 border-b border-[var(--border-subtle)]">
+    <div className="flex items-start justify-between mb-5 pb-4 border-b border-border-subtle">
       <div>
-        <h3 className="text-base font-semibold text-[var(--text-primary)]">{title}</h3>
-        {description && <p className="text-sm text-[var(--text-muted)] mt-1">{description}</p>}
+        <h3 className="text-base font-semibold text-fg">{title}</h3>
+        {description && <p className="text-sm text-fg-muted mt-1">{description}</p>}
       </div>
       {action}
     </div>
@@ -726,9 +746,99 @@ interface CardFooterProps {
 
 export function CardFooter({ children, className = '' }: CardFooterProps) {
   return (
-    <div className={\`mt-5 pt-4 border-t border-[var(--border-subtle)] flex items-center justify-end gap-3 \${className}\`}>
+    <div className={\`mt-5 pt-4 border-t border-border-subtle flex items-center justify-end gap-3 \${className}\`}>
       {children}
     </div>
+  );
+}
+`;
+}
+
+function generateThemeToggle(): string {
+  return `'use client';
+
+import { useEffect, useState } from 'react';
+import { getResolvedTheme, toggleTheme, type Theme } from '@/lib/theme';
+
+/**
+ * ThemeToggle component using M3D structural tokens
+ */
+export function ThemeToggle() {
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setTheme(getResolvedTheme());
+  }, []);
+
+  const handleToggle = () => {
+    const next = toggleTheme();
+    setTheme(next === 'system' ? getResolvedTheme() : next);
+  };
+
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <button className="p-2 rounded hover:bg-muted transition-colors" aria-label="Toggle theme">
+        <div className="w-5 h-5" />
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={handleToggle}
+      className="p-2 rounded hover:bg-muted transition-colors"
+      aria-label={\`Switch to \${theme === 'dark' ? 'light' : 'dark'} mode\`}
+    >
+      {theme === 'dark' ? (
+        <svg className="w-5 h-5 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      ) : (
+        <svg className="w-5 h-5 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+      )}
+    </button>
+  );
+}
+`;
+}
+
+function generateThemeInitScript(): string {
+  return `/**
+ * ThemeInitScript - Prevents flash of wrong theme on page load
+ *
+ * This component injects a script that runs before React hydration
+ * to apply the user's theme preference immediately.
+ */
+export function ThemeInitScript() {
+  const script = \`
+    (function() {
+      try {
+        const stored = localStorage.getItem('theme-preference');
+        let theme = 'light';
+
+        if (stored === 'dark') {
+          theme = 'dark';
+        } else if (stored === 'system' || !stored) {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    })();
+  \`;
+
+  return (
+    <script
+      dangerouslySetInnerHTML={{ __html: script }}
+      // This script runs immediately and is idempotent
+    />
   );
 }
 `;
@@ -779,6 +889,18 @@ export function generateComponents(output: OaxeOutput): GeneratedFile[] {
     content: generateCard(),
   });
 
+  // ThemeToggle component
+  files.push({
+    path: 'src/components/ThemeToggle.tsx',
+    content: generateThemeToggle(),
+  });
+
+  // ThemeInitScript component
+  files.push({
+    path: 'src/components/ThemeInitScript.tsx',
+    content: generateThemeInitScript(),
+  });
+
   // Components index
   files.push({
     path: 'src/components/index.ts',
@@ -789,6 +911,8 @@ export { EntityForm } from './EntityForm';
 export { StatusBadge } from './StatusBadge';
 export { Button } from './Button';
 export { Card, CardHeader, CardFooter } from './Card';
+export { ThemeToggle } from './ThemeToggle';
+export { ThemeInitScript } from './ThemeInitScript';
 `,
   });
 
